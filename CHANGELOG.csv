@@ -1,0 +1,38 @@
+Mục,STT,Tính năng,Mô tả gốc,Đã sửa/Thêm
+I. CÁ NHÂN,1,Bình chọn trong nhóm (Poll),Chưa có,Bổ sung tính năng tạo và tham gia bình chọn trong nhóm chat
+I. CÁ NHÂN,2,Ghi chú cá nhân đính kèm file,Ghi chú cá nhân không hỗ trợ đính kèm file,Nâng cấp ghi chú cá nhân: cho phép đính kèm file giống chat trực tiếp
+I. CÁ NHÂN,3,Xóa nút "+" ở Space,Nút "+" hiển thị ở Space gây rối giao diện,Đã xóa nút "+" ở Space vì không cần thiết
+I. CÁ NHÂN,4,Tạo chủ đề (Topic),Chưa có,Bổ sung tính năng tạo chủ đề để phân loại tin nhắn trong hội thoại
+I. CÁ NHÂN,5,Tìm kiếm bằng số điện thoại và QR,Chưa hỗ trợ tìm kiếm qua số điện thoại hoặc mã QR,Thêm tìm kiếm người dùng bằng số điện thoại và quét mã QR
+I. CÁ NHÂN,6,Header ghi chú cá nhân,Header ghi chú cá nhân hiển thị các nút nghe/gọi/loa/general không cần thiết,Sửa header ghi chú cá nhân: bỏ các nút nghe/gọi/loa/general
+I. CÁ NHÂN,7,Tin nhắn đã lưu,Tin nhắn đã lưu không tự động hiển thị vào mục đã lưu,Tin nhắn đã lưu tự động được hiển thị vào mục đã lưu
+I. CÁ NHÂN,8,Danh sách thành viên trong chat nhóm,Chat nhóm hiển thị cả người ngoài nhóm hoặc không lọc đúng,Chat nhóm chỉ hiển thị đúng danh sách thành viên trong nhóm
+I. CÁ NHÂN,9,Chuyển tiếp tin nhắn,Chưa hỗ trợ chuyển tiếp tin nhắn linh hoạt,Hỗ trợ chuyển tiếp tin nhắn đến cá nhân/nhóm/hoặc chính mình
+I. CÁ NHÂN,10,Mở cửa sổ chat khi nhấn icon,Nhấn icon chat không mở trực tiếp cửa sổ chat,Khi nhấn icon chat sẽ mở trực tiếp cửa sổ chat
+I. CÁ NHÂN,11,Phân loại tính năng theo loại hội thoại,Các tính năng chưa được phân đúng cho từng loại hội thoại,Phân đúng các tính năng cho 3 loại hội thoại khác nhau
+II. KÊNH – Chung,1,Phân loại Tất cả / Chưa đọc,Chưa có phân loại tin nhắn theo trạng thái đọc,Thêm tab phân loại "Tất cả" và "Chưa đọc" trong kênh
+II. KÊNH – Chung,2,Phân loại kênh theo vai trò,Chưa phân loại kênh theo mức độ tham gia,Phân loại kênh thành: Kênh của tôi / Đã tham gia / Đang theo dõi
+II. KÊNH – Chung,3,Phân quyền kênh,Chưa có phân quyền rõ ràng trong kênh,Phân quyền theo vai trò: Chủ kênh / Đã tham gia / Theo dõi
+II. KÊNH – Chung,4,Lọc tin nhắn trong kênh,Chưa hỗ trợ lọc tin nhắn theo tiêu chí,Bổ sung lọc tin nhắn theo: Chủ đề / Ghim / Mới nhất
+II. KÊNH – Thông báo,1,Đăng thông báo từ chat,Chưa thể đăng thông báo trực tiếp từ giao diện chat,Thêm nút loa cho phép đăng thông báo trực tiếp từ chat
+II. KÊNH – Thông báo,2,Form thông báo đầy đủ,Form thông báo thiếu các trường thông tin,Form thông báo đầy đủ: Emoji/tiêu đề/danh mục/mức độ/mô tả/thông tin nổi bật/file đính kèm
+II. KÊNH – Thông báo,3,Lọc thông báo theo danh mục,Chưa hỗ trợ lọc thông báo theo danh mục,Click vào danh mục để lọc thông báo theo loại
+II. KÊNH – Thông báo,4,Giao diện thông báo thống nhất,Giao diện thông báo chưa đồng nhất,Chuẩn hóa và thống nhất giao diện hiển thị thông báo
+II. KÊNH – Thông báo,5,Nhãn mức độ thông báo,Thông báo chưa có nhãn phân loại mức độ,Tất cả thông báo hiển thị nhãn mức độ: Quan trọng / Thông báo
+II. KÊNH – Thông báo,6,Sidebar thông báo mới nhất,Sidebar chưa hiển thị thông báo mới nhất,Sidebar hiển thị thông báo mới nhất của kênh
+II. KÊNH – Thông báo,7,Quản lý phân loại thông báo,Chưa có chức năng quản lý phân loại,Thêm/sửa/xóa phân loại thông báo
+II. KÊNH – Thông báo,8,Quản lý nội dung thông báo,Chưa hỗ trợ sửa/xóa thông báo sau khi đăng,Thêm/sửa/xóa thông báo; thông báo đã đăng vẫn giữ nguyên trong đoạn chat
+II. KÊNH – Thông báo,9,Hiển thị bình luận mới,Bình luận mới không được đẩy lên trên,Khi viết bình luận các bình luận được đẩy lên hiển thị mới nhất
+II. KÊNH – Thông báo,10,Giữ tin nhắn sau khi đăng thông báo,Tin nhắn trong kênh bị mất sau khi đăng thông báo,Giữ lại toàn bộ tin nhắn trong kênh dù đã đăng thông báo
+II. KÊNH – Tài chính,1,Chuẩn hóa module tài chính,Module tài chính chưa đầy đủ và chưa chuẩn hóa,"Chuẩn hóa module với đầy đủ: Tổng quan, Hóa đơn, Doanh thu, Chi phí, Lợi nhuận, Dòng tiền, Thuế, Ngân sách, Công nợ"
+II. KÊNH – Tài chính,2,Báo cáo Doanh thu,Chưa có báo cáo doanh thu chi tiết,"Xem doanh thu theo ngày/tháng/năm/dự án kèm biểu đồ trực quan"
+II. KÊNH – Tài chính,3,Báo cáo Chi phí,Chưa có báo cáo chi phí chi tiết,"Xem chi phí theo ngày/tháng/năm/danh mục kèm biểu đồ trực quan"
+II. KÊNH – Tài chính,4,Báo cáo Lợi nhuận,Chưa có báo cáo lợi nhuận chi tiết,"Xem lợi nhuận theo ngày/tháng/năm/dự án kèm biểu đồ trực quan"
+II. KÊNH – Tài chính,5,Báo cáo Dòng tiền,Chưa có báo cáo dòng tiền chi tiết,"Xem dòng tiền theo ngày/tháng/năm/dự án kèm biểu đồ trực quan"
+II. KÊNH – Tài chính,6,Quản lý Công nợ,Chưa có module quản lý công nợ,"Công nợ phải thu/phải trả, Dashboard tổng quan, xem chi tiết từng công nợ"
+II. KÊNH – Tài chính,7,Quản lý Thuế,Chưa có module quản lý thuế,"Báo cáo thuế/nộp thuế/công nợ thuế, xem đầu ra/đầu vào/khấu trừ"
+II. KÊNH – Tài chính,8,Quản lý Ngân sách,Chưa có module quản lý ngân sách,"Ngân sách theo danh mục/phòng ban/dự án, progress bar hiển thị tiến độ và trạng thái"
+II. KÊNH – Tài chính,9,Hóa đơn thu,Chưa có module hóa đơn thu đầy đủ,"Tất cả/Hóa đơn mua/Bán/Lịch sử/Đối tác trong hóa đơn thu"
+II. KÊNH – Tài chính,10,Hóa đơn chi,Chưa có module hóa đơn chi,Thêm module quản lý hóa đơn chi
+II. KÊNH – Tài chính,11,Quản lý đối tác,Chưa có module quản lý đối tác,Thêm module quản lý đối tác trong tài chính
+II. KÊNH – Tài chính,12,Quản lý thanh toán,Chưa có module quản lý thanh toán,Thêm module quản lý thanh toán

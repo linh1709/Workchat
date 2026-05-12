@@ -1,0 +1,74 @@
+# ========================
+# Dependencies (Hệ quả của Rule 5.1) [4, 5]
+# ========================
+node_modules/
+vendor/
+.pnpm-debug.log*
+
+# ========================
+# Build outputs (Artifacts) [4-6]
+# ========================
+dist/
+build/
+out/
+bin/
+.next/
+.nuxt/
+coverage/
+
+# ========================
+# Logs & Runtime [4, 5, 7]
+# ========================
+*.log
+logs/
+tmp/
+temp/
+.cache/
+.npm/
+.yarn/
+core.*
+
+# ========================
+# Environment & Secrets (BẮT BUỘC) [4-6]
+# ========================
+.env
+.env.local
+.env.dev
+.env.production
+.env.*.local
+*.pem
+*.key
+*.crt
+*.p12
+
+# ========================
+# IDE / OS files [6, 8, 9]
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# ========================
+# Large generated assets [8, 9]
+# ========================
+public/uploads/
+storage/uploads/
+media/
+uploads/
+
+# ========================
+# Package managers (Lock files trong môi trường nhất định) [5, 8]
+# ========================
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ========================
+# Monorepo & Generated helpers [7, 10]
+# ========================
+**/generated/
+tasks/
