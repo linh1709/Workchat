@@ -270,92 +270,91 @@ export function ChannelSidebar({ selectedChannel, onChannelSelect, onClose, chan
   return (
     <div className="w-full md:w-[240px] h-full bg-white border-r border-gray-200 flex flex-col shrink-0">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2 mb-2.5">
-          {/* Mobile: app name */}
-          <p className="md:hidden flex-1 text-[20px] text-gray-900" style={{ fontWeight: 700 }}>VWork Chat</p>
-          {/* Desktop: original label with back button */}
-          <button
-            onClick={onClose}
-            className="hidden md:flex w-6 h-6 rounded-md hover:bg-gray-100 items-center justify-center text-gray-400 hover:text-gray-600 transition-all"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="hidden md:flex items-center gap-1.5 flex-1">
-            <Hash className="w-3.5 h-3.5 text-indigo-500" />
-            <span className="text-[12px] text-gray-700 tracking-tight">Kênh</span>
-          </div>
-          <span className="hidden md:inline text-[10px] text-gray-500">{channels.length}</span>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-6 h-6 rounded-md hover:bg-indigo-50 flex items-center justify-center text-gray-400 hover:text-indigo-600 transition-all"
-            title="Tạo kênh mới"
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+        <p className="md:hidden flex-1 text-[22px] leading-tight" style={{ fontWeight: 800 }}>
+          <span className="text-cyan-500">VWork</span><span className="text-gray-900"> Chat</span>
+        </p>
+        <button onClick={onClose} className="hidden md:flex w-6 h-6 rounded-md hover:bg-gray-100 items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className="hidden md:flex items-center gap-1.5 flex-1">
+          <Hash className="w-3.5 h-3.5 text-indigo-500" />
+          <span className="text-[12px] text-gray-700 tracking-tight">Kênh</span>
+          <span className="text-[10px] text-gray-400 ml-1">{channels.length}</span>
         </div>
-        {/* Search + Sort */}
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-200 flex items-center justify-center text-gray-700 transition-all shrink-0"
+          title="Tạo kênh mới"
+        >
+          <Plus className="w-[18px] h-[18px]" />
+        </button>
+        {/* Sort button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowSortMenu(!showSortMenu)}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+              sortBy !== "name" || !sortAsc
+                ? "bg-indigo-50 text-indigo-600 border border-indigo-200"
+                : "hover:bg-gray-200 text-gray-500 hover:text-gray-700"
+            }`}
+            title="Sắp xếp"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5" />
+          </button>
+          {showSortMenu && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+              <div className="absolute right-0 top-9 w-[180px] bg-white border border-gray-200 rounded-xl shadow-lg shadow-black/8 z-50 py-1 overflow-hidden">
+                <div className="px-3 py-1.5">
+                  <span className="text-[9px] text-gray-500 uppercase tracking-wider">Sắp xếp theo</span>
+                </div>
+                {([
+                  { key: "name", asc: true, icon: <ArrowDownAZ className="w-3.5 h-3.5" />, label: "Tên A → Z" },
+                  { key: "name", asc: false, icon: <ArrowUpAZ className="w-3.5 h-3.5" />, label: "Tên Z → A" },
+                  { key: "members", asc: false, icon: <Users className="w-3.5 h-3.5" />, label: "Nhiều thành viên" },
+                  { key: "members", asc: true, icon: <Users className="w-3.5 h-3.5" />, label: "Ít thành viên" },
+                  { key: "unread", asc: false, icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Tin chưa đọc nhiều" },
+                  { key: "unread", asc: true, icon: <Activity className="w-3.5 h-3.5" />, label: "Tin chưa đọc ít" },
+                  { key: "activity", asc: false, icon: <Clock className="w-3.5 h-3.5" />, label: "Hoạt động gần nhất" },
+                ] as const).map((opt, i) => {
+                  const isActive = sortBy === opt.key && sortAsc === opt.asc;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { setSortBy(opt.key as any); setSortAsc(opt.asc); setShowSortMenu(false); }}
+                      className={`w-full flex items-center gap-2 px-3 py-[6px] text-[11px] transition-all ${
+                        isActive ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={isActive ? "text-indigo-500" : "text-gray-400"}>{opt.icon}</span>
+                      <span className="flex-1 text-left">{opt.label}</span>
+                      {isActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Search + filters */}
+      <div className="px-3 pb-3 border-b border-gray-100">
+        {/* Search */}
         <div className="flex items-center gap-1.5 mb-2">
-          <div className="flex-1 flex items-center gap-1.5 bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-100">
-            <Search className="w-3 h-3 text-gray-400 shrink-0" />
+          <div className="flex-1 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 focus-within:border-cyan-300 transition-all">
+            <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Tìm kênh..."
-              className="flex-1 text-[11px] bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+              className="flex-1 text-[13px] bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
             />
             {search && (
               <button onClick={() => setSearch("")} className="text-gray-400 hover:text-gray-600">
                 <X className="w-3 h-3" />
               </button>
-            )}
-          </div>
-          {/* Sort button */}
-          <div className="relative">
-            <button
-              onClick={() => setShowSortMenu(!showSortMenu)}
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                sortBy !== "name" || !sortAsc
-                  ? "bg-indigo-50 text-indigo-600 border border-indigo-200"
-                  : "hover:bg-gray-100 text-gray-400 hover:text-gray-600 border border-transparent"
-              }`}
-              title="Sắp xếp"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-            </button>
-            {showSortMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
-                <div className="absolute right-0 top-8 w-[180px] bg-white border border-gray-200 rounded-xl shadow-lg shadow-black/8 z-50 py-1 overflow-hidden">
-                  <div className="px-3 py-1.5">
-                    <span className="text-[9px] text-gray-500 uppercase tracking-wider">Sắp xếp theo</span>
-                  </div>
-                  {([
-                    { key: "name", asc: true, icon: <ArrowDownAZ className="w-3.5 h-3.5" />, label: "Tên A → Z" },
-                    { key: "name", asc: false, icon: <ArrowUpAZ className="w-3.5 h-3.5" />, label: "Tên Z → A" },
-                    { key: "members", asc: false, icon: <Users className="w-3.5 h-3.5" />, label: "Nhiều thành viên" },
-                    { key: "members", asc: true, icon: <Users className="w-3.5 h-3.5" />, label: "Ít thành viên" },
-                    { key: "unread", asc: false, icon: <MessageSquare className="w-3.5 h-3.5" />, label: "Tin chưa đọc nhiều" },
-                    { key: "unread", asc: true, icon: <Activity className="w-3.5 h-3.5" />, label: "Tin chưa đọc ít" },
-                    { key: "activity", asc: false, icon: <Clock className="w-3.5 h-3.5" />, label: "Hoạt động gần nhất" },
-                  ] as const).map((opt, i) => {
-                    const isActive = sortBy === opt.key && sortAsc === opt.asc;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => { setSortBy(opt.key as any); setSortAsc(opt.asc); setShowSortMenu(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-[6px] text-[11px] transition-all ${
-                          isActive ? "bg-indigo-50 text-indigo-700" : "text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className={isActive ? "text-indigo-500" : "text-gray-400"}>{opt.icon}</span>
-                        <span className="flex-1 text-left">{opt.label}</span>
-                        {isActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
             )}
           </div>
         </div>

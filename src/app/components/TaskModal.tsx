@@ -32,11 +32,12 @@ interface TaskModalProps {
   nextTaskId?: string;
   onNavigate?: (taskId: string) => void;
   customStatusConfig?: CustomStatusMap;
+  onGoToChat?: (task: Task) => void;
 }
 
 type TabType = "details" | "comments" | "checklists" | "activity" | "worklog";
 
-export function TaskModal({ task, isNew, onClose, onSave, onDelete, defaultProjectId, defaultType, allTasks, prevTaskId, nextTaskId, onNavigate, customStatusConfig }: TaskModalProps) {
+export function TaskModal({ task, isNew, onClose, onSave, onDelete, defaultProjectId, defaultType, allTasks, prevTaskId, nextTaskId, onNavigate, customStatusConfig, onGoToChat }: TaskModalProps) {
   const effectiveStatusConfig: Record<string, { label: string; color: string }> = { ...statusConfig, ...customStatusConfig };
   const taskList = allTasks || initialTasks;
   const [formData, setFormData] = useState<Task>(task || {
@@ -87,6 +88,11 @@ export function TaskModal({ task, isNew, onClose, onSave, onDelete, defaultProje
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
   }, []);
+
+  // Sync formData when navigating between tasks (prev/next arrows)
+  useEffect(() => {
+    if (task) setFormData(task);
+  }, [task?.id]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -1156,13 +1162,15 @@ export function TaskModal({ task, isNew, onClose, onSave, onDelete, defaultProje
               {/* Project */}
               <div className="space-y-1.5">
                 <label className="text-[9px] text-gray-400 uppercase tracking-wider">Dự án</label>
-                <select value={formData.projectId} onChange={e => {
+                <select value={formData.projectId ?? ""} onChange={e => {
                   const oldP = projects.find(p => p.id === formData.projectId);
                   const newP = projects.find(p => p.id === e.target.value);
-                  setFormData(prev => ({ ...prev, projectId: e.target.value, epicId: undefined }));
-                  recordActivity("đã thay đổi", "dự án", oldP?.name, newP?.name);
+                  const newProjectId = e.target.value || undefined;
+                  setFormData(prev => ({ ...prev, projectId: newProjectId, epicId: undefined, sprintId: undefined }));
+                  recordActivity("đã thay đổi", "dự án", oldP?.name || "Không có", newP?.name || "Không có");
                 }}
                   className="w-full text-[11px] border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 outline-none focus:border-cyan-400">
+                  <option value="">— Không có dự án —</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -1456,9 +1464,20 @@ export function TaskModal({ task, isNew, onClose, onSave, onDelete, defaultProje
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-gray-200 bg-gray-50/50 shrink-0">
-          <div className="flex items-center gap-2 text-[9px] text-gray-400">
-            <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">Esc <span className="text-gray-300">đóng</span></span>
-            <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">⌘+Enter <span className="text-gray-300">lưu</span></span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-[9px] text-gray-400">
+              <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">Esc <span className="text-gray-300">đóng</span></span>
+              <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded">⌘+Enter <span className="text-gray-300">lưu</span></span>
+            </div>
+            {onGoToChat && !isNew && (
+              <button
+                onClick={() => { onGoToChat(formData); onClose(); }}
+                className="flex items-center gap-1.5 text-[11px] text-cyan-600 px-3 py-1.5 rounded-lg hover:bg-cyan-50 border border-cyan-200 transition-all font-medium"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Đến chat
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="text-[11px] text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all">Huỷ</button>

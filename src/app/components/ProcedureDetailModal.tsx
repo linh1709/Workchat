@@ -3,9 +3,744 @@ import {
   X, Plus, ChevronDown, Clock, CheckCircle2, XCircle, AlertCircle,
   CalendarDays, User, FileText, Send, Paperclip, MessageSquare,
   ArrowRight, RotateCcw, Eye, Download, MoreHorizontal, Filter,
-  ChevronRight, Info, History, Users, Building2, Tag, ArrowLeft
+  ChevronRight, Info, History, Users, Building2, Tag, ArrowLeft,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
+
+/* ═══════════ AI Request Parser ═══════════ */
+
+interface ParsedRequest {
+  procedureId: string;
+  procedureLabel: string;
+  emoji: string;
+  fields: { label: string; value: string }[];
+  rawText: string;
+}
+
+// ── Swap this function body with Claude API call when ready ──
+// Future integration:
+//   import Anthropic from "@anthropic-ai/sdk";
+//   const client = new Anthropic({ apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY });
+//   const msg = await client.messages.create({
+//     model: "claude-sonnet-4-6", max_tokens: 512,
+//     system: SYSTEM_PROMPT,
+//     messages: [{ role: "user", content: text }],
+//   });
+//   return JSON.parse((msg.content[0] as { text: string }).text);
+async function parseRequestWithAI(text: string): Promise<ParsedRequest | null> {
+  await new Promise(r => setTimeout(r, 900)); // simulate API latency
+  const t = text.toLowerCase();
+
+  const getDate = () => {
+    const days: Record<string, string> = { "t2": "Thứ 2", "t3": "Thứ 3", "t4": "Thứ 4", "t5": "Thứ 5", "t6": "Thứ 6", "t7": "Thứ 7", "cn": "Chủ nhật" };
+    for (const [k, v] of Object.entries(days)) if (t.includes(k)) return v;
+    const m = t.match(/ngày\s*(\d{1,2}\/\d{1,2})/);
+    if (m) return m[1];
+    if (t.includes("tuần tới")) return "Tuần tới";
+    if (t.includes("hôm nay")) return "Hôm nay";
+    return "Chưa xác định";
+  };
+
+  const getReason = () => {
+    const m = text.match(/vì\s+(.+?)(?:\.|$)/i) || text.match(/do\s+(.+?)(?:\.|$)/i) || text.match(/lý do[:\s]+(.+?)(?:\.|$)/i);
+    return m ? m[1].trim() : "Không có lý do cụ thể";
+  };
+
+  if (t.includes("nghỉ phép") || t.includes("xin nghỉ") || t.includes("nghỉ ốm") || t.includes("nghỉ cưới")) {
+    return { procedureId: "pr-leave", procedureLabel: "Đơn xin nghỉ phép", emoji: "📅", rawText: text,
+      fields: [{ label: "Loại nghỉ", value: t.includes("ốm") ? "Nghỉ ốm" : t.includes("cưới") ? "Nghỉ cưới" : "Nghỉ phép năm" }, { label: "Ngày nghỉ", value: getDate() }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("làm thêm") || t.includes("tăng ca") || t.includes("overtime") || t.includes("làm thêm giờ")) {
+    return { procedureId: "pr-overtime", procedureLabel: "Đơn xin làm thêm", emoji: "⏱️", rawText: text,
+      fields: [{ label: "Ngày làm thêm", value: getDate() }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("làm ở nhà") || t.includes("wfh") || t.includes("work from home") || t.includes("làm việc từ xa") || t.includes("làm tại nhà")) {
+    return { procedureId: "pr-remote", procedureLabel: "Đăng ký làm ở nhà", emoji: "🏠", rawText: text,
+      fields: [{ label: "Ngày WFH", value: getDate() }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("ra ngoài") || t.includes("gặp khách") || t.includes("gặp đối tác") || t.includes("ra ngoài công tác")) {
+    return { procedureId: "pr-out", procedureLabel: "Đăng ký ra ngoài gặp khách hàng", emoji: "🤝", rawText: text,
+      fields: [{ label: "Ngày đi", value: getDate() }, { label: "Mục đích", value: getReason() }] };
+  }
+  if (t.includes("tạm ứng") || t.includes("ứng lương") || t.includes("ứng tiền")) {
+    const amtMatch = text.match(/(\d[\d.,]+)\s*(triệu|tr|đồng|vnđ|k)?/i);
+    return { procedureId: "pr-advance", procedureLabel: "Đề nghị tạm ứng", emoji: "💰", rawText: text,
+      fields: [{ label: "Số tiền", value: amtMatch ? `${amtMatch[1]} ${amtMatch[2] || "VNĐ"}` : "Chưa xác định" }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("mua sắm") || t.includes("mua thiết bị") || t.includes("đặt mua") || t.includes("purchase")) {
+    return { procedureId: "pr-shopping", procedureLabel: "Mua sắm", emoji: "🛒", rawText: text,
+      fields: [{ label: "Mặt hàng", value: text.replace(/mua|đặt mua|mua sắm/gi, "").trim().slice(0, 50) || "Chưa xác định" }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("thuyên chuyển") || t.includes("chuyển bộ phận") || t.includes("chuyển phòng") || t.includes("chuyển sang")) {
+    return { procedureId: "pr-transfer", procedureLabel: "Đơn xin thuyên chuyển bộ phận", emoji: "🔀", rawText: text,
+      fields: [{ label: "Ngày hiệu lực", value: getDate() }, { label: "Lý do", value: getReason() }] };
+  }
+  if (t.includes("khai báo y tế") || t.includes("y tế") || t.includes("sức khoẻ") || t.includes("sức khỏe")) {
+    return { procedureId: "pr-medical", procedureLabel: "Khai báo y tế", emoji: "🩺", rawText: text,
+      fields: [{ label: "Ngày", value: getDate() }, { label: "Ghi chú", value: getReason() }] };
+  }
+  return null;
+}
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  parsed?: ParsedRequest;
+  approval?: ParsedApproval;
+  loading?: boolean;
+}
+
+/* ═══════════ AI Approval Parser ═══════════ */
+
+interface ParsedApproval {
+  action: "approve" | "reject" | "approve_all";
+  matchedRequests: RequestItem[];
+  reason?: string;
+}
+
+// ── Swap this function body with Claude API call when ready ──
+// Future integration: same pattern as parseRequestWithAI above
+async function parseApprovalWithAI(text: string, requests: RequestItem[]): Promise<ParsedApproval | null> {
+  await new Promise(r => setTimeout(r, 800));
+  const t = text.toLowerCase();
+
+  const isApprove = t.includes("phê duyệt") || t.includes("duyệt") || t.includes("chấp thuận") || t.includes("approve") || t.includes("ok") || t.includes("đồng ý");
+  const isReject  = t.includes("từ chối") || t.includes("không duyệt") || t.includes("reject") || t.includes("hủy") || t.includes("huỷ");
+  const isAll     = t.includes("tất cả") || t.includes("all") || t.includes("hết");
+
+  if (!isApprove && !isReject) return null;
+
+  const getReason = () => {
+    const m = text.match(/vì\s+(.+?)(?:\.|$)/i) || text.match(/lý do[:\s]+(.+?)(?:\.|$)/i) || text.match(/do\s+(.+?)(?:\.|$)/i);
+    return m ? m[1].trim() : undefined;
+  };
+
+  if (isAll) {
+    return { action: isReject ? "reject" : "approve_all", matchedRequests: requests, reason: getReason() };
+  }
+
+  // Match by requester name, request title, or code
+  const matched = requests.filter(r => {
+    const name = r.requester.name.toLowerCase();
+    const title = r.title.toLowerCase();
+    const code = r.code.toLowerCase();
+    // Check if any word from text matches name parts or title keywords
+    const words = t.split(/\s+/).filter(w => w.length > 2);
+    return words.some(w => name.includes(w) || title.includes(w) || code.includes(w));
+  });
+
+  if (matched.length === 0) return null;
+  return { action: isReject ? "reject" : "approve", matchedRequests: matched, reason: getReason() };
+}
+
+/* ═══════════ AdminProceduresView — top-level tab view for ch-admin ═══════════ */
+
+const procedureTabs = [
+  { id: "all",          label: "Tất cả",                            emoji: "📋" },
+  { id: "pr-leave",     label: "Đơn xin nghỉ phép",                 emoji: "📅" },
+  { id: "pr-out",       label: "Đăng ký ra ngoài gặp khách hàng",   emoji: "🤝" },
+  { id: "pr-overtime",  label: "Đơn xin làm thêm",                  emoji: "⏱️" },
+  { id: "pr-remote",    label: "Đăng ký làm ở nhà",                 emoji: "🏠" },
+  { id: "pr-advance",   label: "Đề nghị tạm ứng",                   emoji: "💰" },
+  { id: "pr-shopping",  label: "Mua sắm",                           emoji: "🛒" },
+  { id: "pr-upcode",    label: "Kế hoạch upcode",                   emoji: "📈" },
+  { id: "pr-medical",   label: "Khai báo y tế",                     emoji: "🩺" },
+  { id: "pr-transfer",  label: "Đơn xin thuyên chuyển bộ phận",     emoji: "🔀" },
+];
+
+const tabRequestMap: Record<string, string> = {
+  "pr-leave":    "pr-leave",
+  "pr-remote":   "pr-remote",
+  "pr-advance":  "pr-salary-adv",
+  "pr-shopping": "pr-buy-equip",
+};
+
+function getAllRequestsForFilter(sidebarFilter: string): RequestItem[] {
+  const allKeys = ["pr-leave", "pr-remote", "pr-salary-adv", "pr-buy-equip", "pr-travel",
+    "pr-expense", "pr-fix-equip", "pr-room", "pr-training", "pr-cert"];
+  const all = allKeys.flatMap(k => mockRequests[k] || []);
+  if (sidebarFilter === "mine") return all.filter(r => r.requester.name === "Nguyễn Diệu Linh" || r.requester.initials === "NA");
+  if (sidebarFilter === "approve") return all.filter(r => r.status === "pending" || r.status === "processing");
+  return all;
+}
+
+function getRequestsForTab(tabId: string, sidebarFilter: string): RequestItem[] {
+  if (tabId === "all") return getAllRequestsForFilter(sidebarFilter);
+  const procedureKey = tabRequestMap[tabId];
+  if (!procedureKey) return [];
+  const reqs = mockRequests[procedureKey] || [];
+  if (sidebarFilter === "mine") return reqs.filter(r => r.requester.initials === "NA");
+  if (sidebarFilter === "approve") return reqs.filter(r => r.status === "pending" || r.status === "processing");
+  return reqs;
+}
+
+export function getSidebarCounts() {
+  const allKeys = ["pr-leave", "pr-remote", "pr-salary-adv", "pr-buy-equip", "pr-travel",
+    "pr-expense", "pr-fix-equip", "pr-room", "pr-training", "pr-cert"];
+  const all = allKeys.flatMap(k => mockRequests[k] || []);
+  return {
+    all:     all.length,
+    mine:    all.filter(r => r.requester.name === "Nguyễn Diệu Linh" || r.requester.initials === "NA").length,
+    approve: all.filter(r => r.status === "pending" || r.status === "processing").length,
+  };
+}
+
+interface AdminProceduresViewProps {
+  sidebarFilter: string;
+}
+
+export function AdminProceduresView({ sidebarFilter }: AdminProceduresViewProps) {
+  const [activeTab, setActiveTab] = useState("all");
+  const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
+  const [showCreateFor, setShowCreateFor] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"all" | RequestStatus>("all");
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formPriority, setFormPriority] = useState("medium");
+  const [searchText, setSearchText] = useState("");
+  const tabBarRef = useRef<HTMLDivElement>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const [localRequests, setLocalRequests] = useState<Record<string, RequestItem[]>>({});
+  const [approvalOverrides, setApprovalOverrides] = useState<Record<string, { status: "approved" | "rejected"; reason?: string }>>({});
+
+  const codePrefixMap: Record<string, string> = {
+    "pr-leave": "NP", "pr-overtime": "LT", "pr-remote": "WFH",
+    "pr-out": "RN", "pr-advance": "TU", "pr-shopping": "MS",
+    "pr-transfer": "TC", "pr-medical": "YT", "pr-upcode": "UC",
+  };
+
+  const addLocalRequest = (parsed: ParsedRequest) => {
+    const prefix = codePrefixMap[parsed.procedureId] || "HS";
+    const code = `${prefix}-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+    const titleField = parsed.fields[0];
+    const reasonField = parsed.fields.find(f => f.label === "Lý do" || f.label === "Mục đích");
+    const newReq: RequestItem = {
+      id: `local-${Date.now()}`,
+      code,
+      title: `${parsed.procedureLabel}${titleField ? " — " + titleField.value : ""}`,
+      description: reasonField?.value || parsed.rawText,
+      requester: { name: "Nguyễn Minh", initials: "NM", color: "#0891b2", department: "Của tôi" },
+      createdAt: new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }),
+      status: "pending",
+      priority: "medium",
+      comments: 0,
+      attachments: 0,
+    };
+    const key = tabRequestMap[parsed.procedureId] || parsed.procedureId;
+    setLocalRequests(prev => ({ ...prev, [key]: [newReq, ...(prev[key] || [])] }));
+    setActiveTab(parsed.procedureId);
+  };
+
+  const handleChatSend = async () => {
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+    setChatInput("");
+    const userMsg: ChatMessage = { id: Date.now().toString(), role: "user", text };
+    const loadingMsg: ChatMessage = { id: Date.now().toString() + "-ai", role: "assistant", text: "", loading: true };
+    setChatMessages(prev => [...prev, userMsg, loadingMsg]);
+    setChatLoading(true);
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+
+    if (sidebarFilter === "approve") {
+      const pendingReqs = [...getLocalForTabDirect("all"), ...getRequestsForTab("all", "approve")]
+        .filter(r => !approvalOverrides[r.id]);
+      const approval = await parseApprovalWithAI(text, pendingReqs);
+      setChatLoading(false);
+      setChatMessages(prev => prev.map(m =>
+        m.loading ? {
+          ...m, loading: false,
+          text: approval
+            ? `Tôi đã nhận ra lệnh ${approval.action === "reject" ? "từ chối" : "phê duyệt"} của bạn. Xác nhận bên dưới:`
+            : "Xin lỗi, tôi chưa xác định được đơn nào cần xử lý. Thử gõ rõ hơn, ví dụ: \"duyệt đơn nghỉ phép của Nguyễn Minh Anh\".",
+          approval: approval ?? undefined,
+        } : m
+      ));
+    } else {
+      const parsed = await parseRequestWithAI(text);
+      setChatLoading(false);
+      setChatMessages(prev => prev.map(m =>
+        m.loading ? { ...m, loading: false, text: parsed ? "Tôi đã nhận ra yêu cầu của bạn. Vui lòng xác nhận thông tin bên dưới:" : "Xin lỗi, tôi chưa nhận ra loại thủ tục này. Bạn có thể thử lại với mô tả rõ hơn, hoặc dùng nút '+ Thêm mới'.", parsed: parsed ?? undefined } : m
+      ));
+    }
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  };
+
+  useEffect(() => {
+    setSelectedRequest(null);
+    setShowCreateFor(null);
+    setFilterStatus("all");
+    setSearchText("");
+  }, [activeTab, sidebarFilter]);
+
+  if (sidebarFilter === "stats") {
+    return <AdminStatsView />;
+  }
+
+  const currentTab = procedureTabs.find(t => t.id === activeTab) || procedureTabs[0];
+
+  const getLocalForTabDirect = (tabId: string): RequestItem[] => {
+    if (tabId === "all") return Object.values(localRequests).flat();
+    const key = tabRequestMap[tabId] || tabId;
+    return localRequests[key] || [];
+  };
+
+  const applyOverride = (r: RequestItem): RequestItem => {
+    const ov = approvalOverrides[r.id];
+    return ov ? { ...r, status: ov.status } : r;
+  };
+
+  const allReqs = [...getLocalForTabDirect(activeTab), ...getRequestsForTab(activeTab, sidebarFilter)]
+    .map(applyOverride)
+    .filter(r => sidebarFilter === "approve" ? (r.status === "pending" || r.status === "processing") : true);
+
+  const filteredReqs = allReqs.filter(r => {
+    const matchStatus = filterStatus === "all" || r.status === filterStatus;
+    const matchSearch = !searchText || r.title.toLowerCase().includes(searchText.toLowerCase()) || r.requester.name.toLowerCase().includes(searchText.toLowerCase());
+    return matchStatus && matchSearch;
+  });
+
+  const tabCounts: Record<string, number> = {};
+  procedureTabs.forEach(t => {
+    tabCounts[t.id] = [...getLocalForTabDirect(t.id), ...getRequestsForTab(t.id, sidebarFilter)].length;
+  });
+
+  if (showCreateFor) {
+    const meta = procedureMetadata[tabRequestMap[showCreateFor] || showCreateFor];
+    const fields = formFieldsByProcedure[tabRequestMap[showCreateFor] || showCreateFor] || [];
+    return (
+      <div className="h-full flex flex-col bg-white">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+          <button onClick={() => setShowCreateFor(null)} className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-700 transition-all">
+            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại
+          </button>
+          <span className="text-gray-200">|</span>
+          <span className="text-[13px] text-gray-700" style={{ fontWeight: 600 }}>
+            {procedureTabs.find(t => t.id === showCreateFor)?.emoji} {procedureTabs.find(t => t.id === showCreateFor)?.label}
+          </span>
+        </div>
+        {meta ? (
+          <CreateRequestTab
+            meta={meta}
+            fields={fields}
+            formData={formData}
+            formPriority={formPriority}
+            onFormChange={(k, v) => setFormData(p => ({ ...p, [k]: v }))}
+            onPriorityChange={setFormPriority}
+            onSubmit={() => {
+              toast.success("Đã gửi yêu cầu thành công!");
+              setFormData({});
+              setShowCreateFor(null);
+            }}
+            onCancel={() => setShowCreateFor(null)}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-gray-400">
+            <FileText className="w-12 h-12 opacity-20" />
+            <p className="text-[13px]">Form tạo đơn đang được cập nhật</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (selectedRequest) {
+    return (
+      <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
+        <div className="px-6 py-3 border-b border-gray-100 flex items-center gap-2 shrink-0">
+          <button onClick={() => setSelectedRequest(null)} className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-700 transition-all">
+            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại
+          </button>
+        </div>
+        <RequestDetailView request={selectedRequest} onBack={() => setSelectedRequest(null)} procedureName={currentTab.label} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
+      {/* Tab bar */}
+      <div className="border-b border-gray-100 shrink-0">
+        <div ref={tabBarRef} className="flex items-center gap-0.5 overflow-x-auto px-4 pt-3 pb-0 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
+          {procedureTabs.map(tab => {
+            const count = tabCounts[tab.id];
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-2 text-[12px] border-b-2 transition-all whitespace-nowrap ${
+                  isActive
+                    ? "border-cyan-500 text-cyan-700"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200"
+                }`}
+                style={isActive ? { fontWeight: 600 } : {}}
+              >
+                <span>{tab.emoji}</span>
+                <span>{tab.label}</span>
+                {count > 0 && (
+                  <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] flex items-center justify-center ${
+                    isActive ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-500"
+                  }`}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-50 shrink-0">
+        {/* Search */}
+        <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 focus-within:border-cyan-300 transition-all">
+          <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+          <input
+            type="text"
+            placeholder="Tìm theo tên, người nộp..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            className="flex-1 text-[12px] bg-transparent outline-none text-gray-700 placeholder-gray-400"
+          />
+          {searchText && <button onClick={() => setSearchText("")} className="text-gray-300 hover:text-gray-500"><X className="w-3 h-3" /></button>}
+        </div>
+        {/* Status filter */}
+        <div className="relative">
+          <button
+            onClick={() => setShowStatusDropdown(p => !p)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[11px] text-gray-600 hover:border-gray-300 transition-all shrink-0"
+          >
+            <Filter className="w-3 h-3 text-gray-400" />
+            {filterStatus === "all" ? "Trạng thái" : statusConfig[filterStatus].label}
+            <ChevronDown className="w-3 h-3 text-gray-400" />
+          </button>
+          {showStatusDropdown && (
+            <>
+              <div className="fixed inset-0 z-20" onClick={() => setShowStatusDropdown(false)} />
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-200 py-1 w-[180px] z-30">
+                <button onClick={() => { setFilterStatus("all"); setShowStatusDropdown(false); }} className={`w-full text-left px-3 py-2 text-[12px] hover:bg-gray-50 ${filterStatus === "all" ? "text-cyan-700 bg-cyan-50" : "text-gray-600"}`}>
+                  Tất cả trạng thái
+                </button>
+                {(Object.keys(statusConfig) as RequestStatus[]).map(s => (
+                  <button key={s} onClick={() => { setFilterStatus(s); setShowStatusDropdown(false); }} className={`w-full text-left px-3 py-2 text-[12px] hover:bg-gray-50 flex items-center gap-2 ${filterStatus === s ? "text-cyan-700 bg-cyan-50" : "text-gray-600"}`}>
+                    <span className={statusConfig[s].color}>{statusConfig[s].icon}</span>
+                    {statusConfig[s].label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {/* Add button — chỉ hiện khi không ở chế độ duyệt */}
+        {sidebarFilter !== "approve" && (
+          <button
+            onClick={() => setShowCreateFor(activeTab === "all" ? "pr-leave" : activeTab)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-[12px] transition-all shadow-sm shrink-0"
+            style={{ fontWeight: 500 }}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Thêm mới
+          </button>
+        )}
+      </div>
+
+      {/* Request list */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        {filteredReqs.length > 0 ? (
+          <div className="space-y-2">
+            {filteredReqs.map(r => (
+              <button
+                key={r.id}
+                onClick={() => setSelectedRequest(r)}
+                className="w-full text-left p-4 rounded-xl border border-gray-100 hover:border-cyan-200 hover:bg-cyan-50/30 transition-all group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] text-white shrink-0" style={{ backgroundColor: r.requester.color, fontWeight: 600 }}>
+                    {r.requester.initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      <span className="text-[10px] text-gray-400 font-mono">{r.code}</span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border ${statusConfig[r.status].bg} ${statusConfig[r.status].color}`}>
+                        {statusConfig[r.status].icon}
+                        {statusConfig[r.status].label}
+                      </span>
+                      <div className="flex items-center gap-1 ml-auto">
+                        <div className={`w-1.5 h-1.5 rounded-full ${priorityConfig[r.priority].dot}`} />
+                        <span className={`text-[10px] ${priorityConfig[r.priority].color}`}>{priorityConfig[r.priority].label}</span>
+                      </div>
+                    </div>
+                    <p className="text-[13px] text-gray-800 truncate" style={{ fontWeight: 500 }}>{r.title}</p>
+                    <p className="text-[11px] text-gray-400 truncate mt-0.5">{r.description}</p>
+                    <div className="flex items-center gap-3 mt-2 text-[10px] text-gray-400">
+                      <span className="flex items-center gap-1"><User className="w-3 h-3" />{r.requester.name}</span>
+                      <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" />{r.createdAt}</span>
+                      {r.comments > 0 && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{r.comments}</span>}
+                      {r.attachments > 0 && <span className="flex items-center gap-1"><Paperclip className="w-3 h-3" />{r.attachments}</span>}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-2" />
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-7 h-7 text-gray-200" />
+            </div>
+            <p className="text-[13px] text-gray-500" style={{ fontWeight: 500 }}>
+              {searchText ? "Không tìm thấy kết quả" : "Chưa có yêu cầu nào"}
+            </p>
+            <p className="text-[11px] text-gray-400 mt-1">
+              {searchText ? "Thử từ khoá khác" : `Bấm "+ Thêm mới" để tạo ${currentTab.label}`}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ── AI Chat bar ── */}
+      <div className="shrink-0 border-t border-gray-100 bg-white">
+        {/* Chat messages */}
+        {chatMessages.length > 0 && (
+          <div className="max-h-[280px] overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/60">
+            {chatMessages.map(msg => (
+              <div key={msg.id} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                {msg.role === "assistant" && (
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    <span className="text-[12px]">✨</span>
+                  </div>
+                )}
+                <div className={`max-w-[80%] space-y-2 ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col`}>
+                  {/* Bubble */}
+                  <div className={`px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-cyan-500 text-white rounded-tr-sm"
+                      : "bg-white border border-gray-200 text-gray-700 rounded-tl-sm shadow-sm"
+                  }`}>
+                    {msg.loading ? (
+                      <span className="flex items-center gap-2 text-gray-400">
+                        <span className="flex gap-1">
+                          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </span>
+                        Đang phân tích...
+                      </span>
+                    ) : msg.text}
+                  </div>
+                  {/* Approval card */}
+                  {msg.approval && (
+                    <ApprovalCard
+                      approval={msg.approval}
+                      onConfirm={(action, ids, reason) => {
+                        const overrides: Record<string, { status: "approved" | "rejected"; reason?: string }> = {};
+                        ids.forEach(id => { overrides[id] = { status: action, reason }; });
+                        setApprovalOverrides(prev => ({ ...prev, ...overrides }));
+                        const label = action === "approve" ? "Đã phê duyệt" : "Đã từ chối";
+                        toast.success(`${label} ${ids.length} đơn thành công`);
+                        setChatMessages([]);
+                      }}
+                    />
+                  )}
+                  {/* Create confirmation card */}
+                  {msg.parsed && (
+                    <div className="w-full bg-white border border-cyan-100 rounded-xl overflow-hidden shadow-sm">
+                      <div className="flex items-center gap-2 px-3.5 py-2.5 bg-cyan-50 border-b border-cyan-100">
+                        <span className="text-[16px]">{msg.parsed.emoji}</span>
+                        <span className="text-[12px] text-cyan-800" style={{ fontWeight: 600 }}>{msg.parsed.procedureLabel}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-cyan-500 ml-auto" />
+                      </div>
+                      <div className="px-3.5 py-2.5 space-y-1.5">
+                        {msg.parsed.fields.map(f => (
+                          <div key={f.label} className="flex items-center justify-between gap-3">
+                            <span className="text-[11px] text-gray-400 shrink-0">{f.label}</span>
+                            <span className="text-[11px] text-gray-700 text-right truncate" style={{ fontWeight: 500 }}>{f.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-gray-100 bg-gray-50/50">
+                        <button
+                          onClick={() => {
+                            const pid = msg.parsed!.procedureId;
+                            const prefill: Record<string, string> = {};
+                            msg.parsed!.fields.forEach(f => { prefill[f.label] = f.value; });
+                            setFormData(prefill);
+                            setShowCreateFor(pid);
+                          }}
+                          className="flex-1 py-1.5 rounded-lg border border-gray-200 text-[11px] text-gray-600 hover:bg-gray-100 transition-all"
+                        >
+                          Sửa lại
+                        </button>
+                        <button
+                          onClick={() => {
+                            addLocalRequest(msg.parsed!);
+                            toast.success("Đã gửi yêu cầu thành công!", { description: msg.parsed!.procedureLabel });
+                            setChatMessages([]);
+                          }}
+                          className="flex-1 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+                          style={{ fontWeight: 500 }}
+                        >
+                          <Send className="w-3 h-3" />
+                          Xác nhận & Gửi đơn
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+        )}
+
+        {/* Input row */}
+        <div className="px-4 py-3 flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shrink-0 shadow-sm">
+            <span className="text-[12px]">✨</span>
+          </div>
+          <div className="flex-1 flex items-center gap-2 px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 focus-within:border-cyan-300 focus-within:bg-white transition-all">
+            <input
+              ref={chatInputRef}
+              type="text"
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleChatSend()}
+              placeholder={sidebarFilter === "approve"
+                ? 'Ví dụ: "duyệt đơn nghỉ phép của Minh Anh" hoặc "từ chối đơn mua bàn phím vì hết ngân sách"'
+                : 'Nhập yêu cầu, ví dụ: "tôi muốn xin nghỉ phép t7 vì gia đình có việc"'}
+              className="flex-1 text-[12px] bg-transparent outline-none text-gray-700 placeholder-gray-400"
+              disabled={chatLoading}
+            />
+            {chatInput && (
+              <button onClick={() => setChatInput("")} className="text-gray-300 hover:text-gray-500 shrink-0">
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          <button
+            onClick={handleChatSend}
+            disabled={!chatInput.trim() || chatLoading}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0 ${
+              chatInput.trim() && !chatLoading
+                ? "bg-cyan-500 hover:bg-cyan-600 text-white shadow-sm"
+                : "bg-gray-100 text-gray-300 cursor-not-allowed"
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════ Approval confirmation card (rendered inside chat bubble) ═══════════ */
+function ApprovalCard({ approval, onConfirm }: {
+  approval: ParsedApproval;
+  onConfirm: (action: "approve" | "reject", ids: string[], reason?: string) => void;
+}) {
+  const isReject = approval.action === "reject";
+  const accent = isReject
+    ? { bg: "bg-red-50", border: "border-red-100", header: "bg-red-50 border-red-100", icon: "❌", text: "text-red-700", btn: "bg-red-500 hover:bg-red-600" }
+    : { bg: "bg-emerald-50", border: "border-emerald-100", header: "bg-emerald-50 border-emerald-100", icon: "✅", text: "text-emerald-700", btn: "bg-emerald-500 hover:bg-emerald-600" };
+
+  return (
+    <div className={`w-full bg-white border ${accent.border} rounded-xl overflow-hidden shadow-sm`}>
+      <div className={`flex items-center gap-2 px-3.5 py-2.5 ${accent.header} border-b`}>
+        <span className="text-[15px]">{accent.icon}</span>
+        <span className={`text-[12px] ${accent.text}`} style={{ fontWeight: 600 }}>
+          {isReject ? "Từ chối" : "Phê duyệt"} {approval.matchedRequests.length} đơn
+        </span>
+      </div>
+      <div className="px-3.5 py-2.5 space-y-2 max-h-[160px] overflow-y-auto">
+        {approval.matchedRequests.map(r => (
+          <div key={r.id} className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] text-white shrink-0" style={{ backgroundColor: r.requester.color, fontWeight: 700 }}>
+              {r.requester.initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-gray-800 truncate" style={{ fontWeight: 500 }}>{r.title}</p>
+              <p className="text-[10px] text-gray-400">{r.requester.name}</p>
+            </div>
+          </div>
+        ))}
+        {approval.reason && (
+          <div className={`mt-1 px-2.5 py-1.5 rounded-lg ${isReject ? "bg-red-50" : "bg-emerald-50"}`}>
+            <p className="text-[10px] text-gray-500">Lý do: <span className="text-gray-700">{approval.reason}</span></p>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2 px-3.5 py-2.5 border-t border-gray-100 bg-gray-50/50">
+        <button
+          onClick={() => onConfirm(isReject ? "reject" : "approve", approval.matchedRequests.map(r => r.id), approval.reason)}
+          className={`flex-1 py-1.5 rounded-lg text-white text-[11px] transition-all shadow-sm flex items-center justify-center gap-1.5 ${accent.btn}`}
+          style={{ fontWeight: 500 }}
+        >
+          <CheckCircle2 className="w-3 h-3" />
+          Xác nhận {isReject ? "từ chối" : "phê duyệt"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminStatsView() {
+  const allReqs = Object.values(mockRequests).flat();
+  const counts = {
+    total: allReqs.length,
+    pending: allReqs.filter(r => r.status === "pending").length,
+    processing: allReqs.filter(r => r.status === "processing").length,
+    approved: allReqs.filter(r => r.status === "approved").length,
+    rejected: allReqs.filter(r => r.status === "rejected").length,
+  };
+  const stats = [
+    { label: "Tổng yêu cầu",  value: counts.total,      color: "bg-gray-100 text-gray-700",      dot: "bg-gray-400" },
+    { label: "Chờ duyệt",     value: counts.pending,    color: "bg-amber-50 text-amber-700",     dot: "bg-amber-400" },
+    { label: "Đang xử lý",    value: counts.processing, color: "bg-blue-50 text-blue-700",       dot: "bg-blue-400" },
+    { label: "Đã duyệt",      value: counts.approved,   color: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-400" },
+    { label: "Từ chối",       value: counts.rejected,   color: "bg-red-50 text-red-600",         dot: "bg-red-400" },
+  ];
+  return (
+    <div className="flex-1 overflow-y-auto px-6 py-6">
+      <p className="text-[13px] text-gray-700 mb-4" style={{ fontWeight: 600 }}>Thống kê yêu cầu</p>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {stats.map(s => (
+          <div key={s.label} className={`p-4 rounded-xl border border-gray-100 ${s.color}`}>
+            <p className="text-[11px] text-current opacity-70 mb-1">{s.label}</p>
+            <p className="text-[28px]" style={{ fontWeight: 700 }}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[13px] text-gray-700 mb-3" style={{ fontWeight: 600 }}>Theo loại đơn</p>
+      <div className="space-y-2">
+        {procedureTabs.filter(t => t.id !== "all").map(tab => {
+          const key = tabRequestMap[tab.id];
+          const count = key ? (mockRequests[key]?.length || 0) : 0;
+          const pct = counts.total > 0 ? Math.round((count / counts.total) * 100) : 0;
+          return (
+            <div key={tab.id} className="flex items-center gap-3">
+              <span className="text-[14px] shrink-0">{tab.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-gray-600 truncate">{tab.label}</span>
+                  <span className="text-[11px] text-gray-500 shrink-0 ml-2">{count}</span>
+                </div>
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-cyan-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /* ═══════════ Types ═══════════ */
 type RequestStatus = "pending" | "approved" | "rejected" | "processing" | "cancelled";

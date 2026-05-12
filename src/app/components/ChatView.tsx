@@ -1802,6 +1802,457 @@ function GroupProfilePanel({ onClose, group, sharedMedia, sharedFiles, sharedLin
   );
 }
 
+function UserProfilePanel({ user, onClose }: {
+  user: { id: string; name: string; color: string; isBot?: boolean };
+  onClose: () => void;
+}) {
+  const [muted, setMuted] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isContact, setIsContact] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showEditContact, setShowEditContact] = useState(false);
+  const [contactInfo, setContactInfo] = useState({ nickname: "", phone: "", email: "", note: "" });
+  const [activeSubView, setActiveSubView] = useState<"main" | "photos" | "files" | "links" | "groups">("main");
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+
+  const statusMap: Record<string, { label: string; color: string }> = {
+    u2: { label: "đang hoạt động", color: "#22c55e" },
+    u3: { label: "đang hoạt động", color: "#22c55e" },
+    u4: { label: "vắng mặt", color: "#f59e0b" },
+    u5: { label: "ngoại tuyến", color: "#9ca3af" },
+  };
+  const infoMap: Record<string, { phone: string; bio: string; username: string }> = {
+    u2: { phone: "+84 912 345 678", bio: "Design Lead @ VWork 🎨", username: "@tranuong" },
+    u3: { phone: "+84 987 654 321", bio: "Fullstack developer, coffee addict ☕", username: "@lephuc.dev" },
+    u4: { phone: "+84 934 567 890", bio: "Product Manager | ex-Google", username: "@phamlan" },
+    u5: { phone: "+84 911 222 333", bio: "Backend Engineer 🛠️", username: "@hoanhduc" },
+  };
+
+  const status = statusMap[user.id] || { label: "đang hoạt động", color: "#22c55e" };
+  const info = infoMap[user.id] || { phone: "—", bio: "—", username: "@" + user.name.toLowerCase().replace(/\s+/g, "") };
+  const displayName = contactInfo.nickname.trim() || user.name;
+
+  const sharedPhotos = useMemo(() => [
+    { id: "sp1", url: "https://images.unsplash.com/photo-1633457896836-f8d6025c85d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "18 Th3 2026", sender: "Bạn" },
+    { id: "sp2", url: "https://images.unsplash.com/photo-1562351768-f68650f3ec54?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "17 Th3 2026", sender: user.name },
+    { id: "sp3", url: "https://images.unsplash.com/photo-1598439473183-42c9301db5dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "16 Th3 2026", sender: "Bạn" },
+    { id: "sp4", url: "https://images.unsplash.com/photo-1663669712117-e8ba7d48e46f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "15 Th3 2026", sender: user.name },
+    { id: "sp5", url: "https://images.unsplash.com/photo-1765611441802-da6a2070578c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "14 Th3 2026", sender: "Bạn" },
+    { id: "sp6", url: "https://images.unsplash.com/photo-1695067439031-f59068994fae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "13 Th3 2026", sender: user.name },
+    { id: "sp7", url: "https://images.unsplash.com/photo-1615820358106-6b112e1f690d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "12 Th3 2026", sender: "Bạn" },
+    { id: "sp8", url: "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "11 Th3 2026", sender: user.name },
+    { id: "sp9", url: "https://images.unsplash.com/photo-1623721854453-93a8ad273d16?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "10 Th3 2026", sender: "Bạn" },
+    { id: "sp10", url: "https://images.unsplash.com/photo-1598087216773-d02ad98034f1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "09 Th3 2026", sender: user.name },
+    { id: "sp11", url: "https://images.unsplash.com/photo-1674229229331-c45398da14e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "08 Th3 2026", sender: "Bạn" },
+    { id: "sp12", url: "https://images.unsplash.com/photo-1649504277328-1f84d8bb19b0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "07 Th3 2026", sender: user.name },
+    { id: "sp13", url: "https://images.unsplash.com/photo-1666107677986-c264fc8f908e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "06 Th3 2026", sender: "Bạn" },
+    { id: "sp14", url: "https://images.unsplash.com/photo-1613723984367-a9b7ee9052d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "05 Th3 2026", sender: user.name },
+    { id: "sp15", url: "https://images.unsplash.com/photo-1667297794059-d3cbc4eef35c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "04 Th3 2026", sender: "Bạn" },
+    { id: "sp16", url: "https://images.unsplash.com/photo-1666559447692-74196b1c4694?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "03 Th3 2026", sender: user.name },
+    { id: "sp17", url: "https://images.unsplash.com/photo-1706463996554-6c6318946b3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "02 Th3 2026", sender: "Bạn" },
+    { id: "sp18", url: "https://images.unsplash.com/photo-1768373064063-a7717c6968f9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "01 Th3 2026", sender: user.name },
+    { id: "sp19", url: "https://images.unsplash.com/photo-1723962807917-ffab0600929c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "28 Th2 2026", sender: "Bạn" },
+    { id: "sp20", url: "https://images.unsplash.com/photo-1759668358660-0d06064f0f84?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400", date: "27 Th2 2026", sender: user.name },
+  ], [user.name]);
+
+  const ppSharedFiles = useMemo(() => [
+    { id: "sf1", name: "Báo_cáo_Q1_2026.xlsx", size: "2.4 MB", date: "18 Th3 2026", sender: user.name, ext: "xlsx" },
+    { id: "sf2", name: "Design_System_v3.fig", size: "18.7 MB", date: "15 Th3 2026", sender: "Bạn", ext: "fig" },
+    { id: "sf3", name: "Meeting_Notes_Sprint42.pdf", size: "540 KB", date: "10 Th3 2026", sender: user.name, ext: "pdf" },
+  ], [user.name]);
+
+  const ppSharedLinks = useMemo(() => [
+    { id: "sl1", url: "https://figma.com/file/abc123", title: "VWork Pro - Design System", domain: "figma.com", date: "18 Th3", sender: user.name, color: "#a259ff" },
+    { id: "sl2", url: "https://github.com/vwork/frontend/pull/142", title: "PR #142: Refactor chat module", domain: "github.com", date: "17 Th3", sender: "Bạn", color: "#24292f" },
+    { id: "sl3", url: "https://docs.google.com/spreadsheets/d/xyz", title: "Sprint Planning Q2 2026", domain: "docs.google.com", date: "16 Th3", sender: user.name, color: "#34a853" },
+    { id: "sl4", url: "https://notion.so/vwork/roadmap", title: "Product Roadmap 2026", domain: "notion.so", date: "15 Th3", sender: "Bạn", color: "#000" },
+    { id: "sl5", url: "https://stackoverflow.com/questions/12345", title: "How to optimize React re-renders", domain: "stackoverflow.com", date: "14 Th3", sender: user.name, color: "#f48024" },
+    { id: "sl6", url: "https://medium.com/@dev/react-patterns", title: "Advanced React Patterns 2026", domain: "medium.com", date: "13 Th3", sender: "Bạn", color: "#000" },
+    { id: "sl7", url: "https://vercel.com/vwork/deployments", title: "VWork Deployment Dashboard", domain: "vercel.com", date: "12 Th3", sender: user.name, color: "#000" },
+    { id: "sl8", url: "https://linear.app/vwork/issue/VW-234", title: "VW-234: Fix chat scroll bug", domain: "linear.app", date: "11 Th3", sender: "Bạn", color: "#5e6ad2" },
+    { id: "sl9", url: "https://www.youtube.com/watch?v=abc", title: "React Server Components Deep Dive", domain: "youtube.com", date: "10 Th3", sender: user.name, color: "#ff0000" },
+    { id: "sl10", url: "https://tailwindcss.com/docs/v4", title: "Tailwind CSS v4 Documentation", domain: "tailwindcss.com", date: "09 Th3", sender: "Bạn", color: "#06b6d4" },
+    { id: "sl11", url: "https://jira.atlassian.com/browse/VW-100", title: "VW-100: Performance audit", domain: "jira.atlassian.com", date: "08 Th3", sender: user.name, color: "#0052cc" },
+    { id: "sl12", url: "https://slack.com/archives/C01/p123", title: "Thread: API integration discussion", domain: "slack.com", date: "07 Th3", sender: "Bạn", color: "#4a154b" },
+    { id: "sl13", url: "https://npmjs.com/package/motion", title: "motion - npm", domain: "npmjs.com", date: "06 Th3", sender: user.name, color: "#cb3837" },
+    { id: "sl14", url: "https://developer.mozilla.org/en-US/docs", title: "MDN Web Docs - CSS Grid", domain: "developer.mozilla.org", date: "05 Th3", sender: "Bạn", color: "#000" },
+    { id: "sl15", url: "https://aws.amazon.com/s3", title: "Amazon S3 - Cloud Storage", domain: "aws.amazon.com", date: "04 Th3", sender: user.name, color: "#ff9900" },
+    { id: "sl16", url: "https://fonts.google.com/specimen/Outfit", title: "Outfit - Google Fonts", domain: "fonts.google.com", date: "03 Th3", sender: "Bạn", color: "#4285f4" },
+    { id: "sl17", url: "https://dribbble.com/shots/vwork-chat", title: "VWork Chat UI Concept", domain: "dribbble.com", date: "02 Th3", sender: user.name, color: "#ea4c89" },
+    { id: "sl18", url: "https://postman.com/collections/api-v2", title: "VWork API v2 Collection", domain: "postman.com", date: "01 Th3", sender: "Bạn", color: "#ff6c37" },
+    { id: "sl19", url: "https://sentry.io/vwork/issues/789", title: "Sentry: TypeError in ChatView", domain: "sentry.io", date: "28 Th2", sender: user.name, color: "#362d59" },
+    { id: "sl20", url: "https://react.dev/learn/hooks", title: "React Hooks Documentation", domain: "react.dev", date: "27 Th2", sender: "Bạn", color: "#087ea4" },
+    { id: "sl21", url: "https://supabase.com/docs/guides/auth", title: "Supabase Auth Guide", domain: "supabase.com", date: "26 Th2", sender: user.name, color: "#3ecf8e" },
+    { id: "sl22", url: "https://vite.dev/guide", title: "Vite Guide - Next Gen Frontend", domain: "vite.dev", date: "25 Th2", sender: "Bạn", color: "#646cff" },
+    { id: "sl23", url: "https://prisma.io/docs", title: "Prisma ORM Documentation", domain: "prisma.io", date: "24 Th2", sender: user.name, color: "#2d3748" },
+    { id: "sl24", url: "https://excalidraw.com/#room=vwork", title: "Architecture Diagram - VWork", domain: "excalidraw.com", date: "23 Th2", sender: "Bạn", color: "#6965db" },
+    { id: "sl25", url: "https://codepen.io/pen/vwork-animation", title: "Chat Transition Animation Demo", domain: "codepen.io", date: "22 Th2", sender: user.name, color: "#000" },
+    { id: "sl26", url: "https://planetscale.com/docs", title: "PlanetScale Database Docs", domain: "planetscale.com", date: "21 Th2", sender: "Bạn", color: "#000" },
+    { id: "sl27", url: "https://turborepo.org/docs", title: "Turborepo - Monorepo Tool", domain: "turborepo.org", date: "20 Th2", sender: user.name, color: "#000" },
+    { id: "sl28", url: "https://storybook.js.org", title: "Storybook - UI Component Explorer", domain: "storybook.js.org", date: "19 Th2", sender: "Bạn", color: "#ff4785" },
+    { id: "sl29", url: "https://zod.dev", title: "Zod - TypeScript Schema Validation", domain: "zod.dev", date: "18 Th2", sender: user.name, color: "#3068b7" },
+    { id: "sl30", url: "https://tanstack.com/query/latest", title: "TanStack Query Documentation", domain: "tanstack.com", date: "17 Th2", sender: "Bạn", color: "#ef4444" },
+    { id: "sl31", url: "https://railway.app/dashboard", title: "Railway - Cloud Deployment", domain: "railway.app", date: "16 Th2", sender: user.name, color: "#000" },
+    { id: "sl32", url: "https://pnpm.io/motivation", title: "pnpm - Fast Package Manager", domain: "pnpm.io", date: "15 Th2", sender: "Bạn", color: "#f69220" },
+    { id: "sl33", url: "https://vitest.dev/guide", title: "Vitest - Next Gen Testing", domain: "vitest.dev", date: "14 Th2", sender: user.name, color: "#729b1b" },
+    { id: "sl34", url: "https://playwright.dev/docs/intro", title: "Playwright E2E Testing", domain: "playwright.dev", date: "13 Th2", sender: "Bạn", color: "#2ead33" },
+    { id: "sl35", url: "https://www.typescriptlang.org/docs", title: "TypeScript Documentation", domain: "typescriptlang.org", date: "12 Th2", sender: user.name, color: "#3178c6" },
+    { id: "sl36", url: "https://nextjs.org/docs/app", title: "Next.js App Router Docs", domain: "nextjs.org", date: "11 Th2", sender: "Bạn", color: "#000" },
+    { id: "sl37", url: "https://radix-ui.com/docs", title: "Radix UI Primitives", domain: "radix-ui.com", date: "10 Th2", sender: user.name, color: "#000" },
+    { id: "sl38", url: "https://sonner.dev", title: "Sonner - Toast Component", domain: "sonner.dev", date: "09 Th2", sender: "Bạn", color: "#000" },
+    { id: "sl39", url: "https://lucide.dev/icons", title: "Lucide Icons Library", domain: "lucide.dev", date: "08 Th2", sender: user.name, color: "#f56565" },
+    { id: "sl40", url: "https://recharts.org/en-US/api", title: "Recharts API Reference", domain: "recharts.org", date: "07 Th2", sender: "Bạn", color: "#8884d8" },
+    { id: "sl41", url: "https://date-fns.org/docs", title: "date-fns Documentation", domain: "date-fns.org", date: "06 Th2", sender: user.name, color: "#770c56" },
+    { id: "sl42", url: "https://formik.org/docs/overview", title: "Formik - Form Library", domain: "formik.org", date: "05 Th2", sender: "Bạn", color: "#1a73e8" },
+  ], [user.name]);
+
+  const fileExtColors: Record<string, string> = { xlsx: "#217346", fig: "#a259ff", pdf: "#dc2626", doc: "#2b579a", zip: "#f59e0b", pptx: "#d24726" };
+
+  const subViewHeader = (title: string, icon: React.ReactNode) => (
+    <div className="h-[52px] border-b border-gray-100 flex items-center px-4 shrink-0 gap-2 bg-white">
+      <button onClick={() => setActiveSubView("main")} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+        <ArrowLeft className="w-4 h-4" />
+      </button>
+      {icon}
+      <span className="text-[14px] font-medium text-gray-800 flex-1">{title}</span>
+      <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  );
+
+  const renderInner = () => {
+    // ---- Photos ----
+    if (activeSubView === "photos") {
+      const grouped: Record<string, typeof sharedPhotos> = {};
+      sharedPhotos.forEach(p => {
+        const month = p.date.split(" ").slice(1).join(" ");
+        if (!grouped[month]) grouped[month] = [];
+        grouped[month].push(p);
+      });
+      return (
+        <>
+          {subViewHeader(`${sharedPhotos.length} ảnh`, <ImageIcon className="w-4 h-4 text-sky-500" />)}
+          <div className="flex-1 overflow-y-auto">
+            {Object.entries(grouped).map(([month, photos]) => (
+              <div key={month}>
+                <div className="px-4 py-2 sticky top-0 bg-white/90 backdrop-blur-sm z-10">
+                  <span className="text-[11px] text-gray-500">{month}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-0.5 px-0.5">
+                  {photos.map(photo => (
+                    <button key={photo.id} onClick={() => setLightboxImg(photo.url)} className="aspect-square overflow-hidden group relative">
+                      <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          {lightboxImg && (() => {
+            const currentIndex = sharedPhotos.findIndex(p => p.url === lightboxImg);
+            return (
+              <div className="fixed inset-0 bg-black/80 z-[9999] flex items-center justify-center" onClick={() => setLightboxImg(null)}>
+                <button onClick={() => setLightboxImg(null)} className="absolute top-4 right-4 text-white/80 hover:text-white z-10"><X className="w-6 h-6" /></button>
+                {currentIndex > 0 && <button onClick={e => { e.stopPropagation(); setLightboxImg(sharedPhotos[currentIndex - 1].url); }} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white hover:bg-white/20 p-3 rounded-full transition-all"><ChevronLeft className="w-6 h-6" /></button>}
+                <img src={lightboxImg} alt="" className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+                {currentIndex < sharedPhotos.length - 1 && <button onClick={e => { e.stopPropagation(); setLightboxImg(sharedPhotos[currentIndex + 1].url); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white hover:bg-white/20 p-3 rounded-full transition-all"><ChevronRight className="w-6 h-6" /></button>}
+                <div className="absolute bottom-4 flex gap-2 items-center">
+                  <div className="text-white/60 text-[12px]">{currentIndex + 1} / {sharedPhotos.length}</div>
+                  <button onClick={e => { e.stopPropagation(); toast.success("Đã tải ảnh về", { duration: 2000 }); }} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[12px] flex items-center gap-1.5 backdrop-blur-sm transition-colors"><Download className="w-3.5 h-3.5" />Tải về</button>
+                  <button onClick={e => { e.stopPropagation(); copyToClipboard(lightboxImg || "").then(() => toast.success("Đã sao chép liên kết", { duration: 2000 })); }} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[12px] flex items-center gap-1.5 backdrop-blur-sm transition-colors"><Share2 className="w-3.5 h-3.5" />Chia sẻ</button>
+                </div>
+              </div>
+            );
+          })()}
+        </>
+      );
+    }
+
+    // ---- Files ----
+    if (activeSubView === "files") {
+      return (
+        <>
+          {subViewHeader(`${ppSharedFiles.length} tệp tin`, <FileIcon className="w-4 h-4 text-amber-500" />)}
+          <div className="flex-1 overflow-y-auto">
+            {ppSharedFiles.map(file => (
+              <div key={file.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 group cursor-pointer">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-white text-[10px]" style={{ backgroundColor: fileExtColors[file.ext] || "#6b7280" }}>
+                  {file.ext.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-gray-800 truncate">{file.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-gray-500">{file.size}</span>
+                    <span className="text-[11px] text-gray-300">·</span>
+                    <span className="text-[11px] text-gray-500">{file.date}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-0.5">Từ: {file.sender}</p>
+                </div>
+                <button onClick={() => toast.success(`Đang tải "${file.name}"`, { duration: 2000 })} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-300 group-hover:text-gray-500 transition-all shrink-0 mt-0.5">
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // ---- Links ----
+    if (activeSubView === "links") {
+      return (
+        <>
+          {subViewHeader(`${ppSharedLinks.length} liên kết chung`, <Link2 className="w-4 h-4 text-green-500" />)}
+          <div className="flex-1 overflow-y-auto">
+            {ppSharedLinks.map(link => (
+              <button key={link.id} onClick={() => { copyToClipboard(link.url).then(() => toast.success("Đã sao chép liên kết", { duration: 1500 })); }} className="w-full flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left group">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: link.color + "14" }}>
+                  <Globe className="w-3.5 h-3.5" style={{ color: link.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] text-gray-800 truncate group-hover:text-cyan-600 transition-colors">{link.title}</p>
+                  <p className="text-[10px] text-cyan-600/70 truncate mt-0.5">{link.domain}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-gray-500">{link.sender}</span>
+                    <span className="text-[10px] text-gray-300">·</span>
+                    <span className="text-[10px] text-gray-500">{link.date}</span>
+                  </div>
+                </div>
+                <ExternalLink className="w-3 h-3 text-gray-300 group-hover:text-gray-400 shrink-0 mt-1.5 transition-colors" />
+              </button>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // ---- Groups ----
+    if (activeSubView === "groups") {
+      return (
+        <>
+          {subViewHeader("15 nhóm chung", <Users className="w-4 h-4 text-indigo-500" />)}
+          <div className="flex-1 overflow-y-auto">
+            {commonGroups.map(group => (
+              <button key={group.id} onClick={() => { onClose(); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 text-left group/item">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg" style={{ backgroundColor: group.color + "15" }}>
+                  {group.emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-gray-800 group-hover/item:text-cyan-600 transition-colors">{group.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-gray-500">{group.members} thành viên</span>
+                    <span className="text-[11px] text-gray-300">·</span>
+                    <span className="text-[11px] text-gray-500">{group.lastActive}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-gray-400 transition-colors shrink-0" />
+              </button>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // ---- Delete confirm ----
+    if (showDeleteConfirm) {
+      return (
+        <>
+          <div className="h-[52px] border-b border-gray-100 flex items-center px-4 shrink-0 bg-white">
+            <button onClick={() => setShowDeleteConfirm(false)} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all mr-2">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <span className="text-[14px] font-medium text-gray-800 flex-1">Xác nhận</span>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-2">Xoá liên hệ?</h3>
+            <p className="text-[13px] text-gray-500 text-center mb-6">Bạn chắc chắn muốn xoá "{displayName}" khỏi danh bạ? Bạn vẫn có thể tìm thấy tin nhắn của họ trong chat.</p>
+            <div className="flex gap-2 w-full">
+              <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">Hủy</button>
+              <button onClick={() => { setIsContact(v => !v); toast(isContact ? "Đã xoá liên hệ" : "Đã thêm liên hệ", { icon: <Trash2 className={`w-4 h-4 ${isContact ? "text-red-500" : "text-green-500"}`} />, duration: 2000 }); setShowDeleteConfirm(false); }} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[13px] hover:bg-red-600 transition-colors">Xoá</button>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ---- Block confirm ----
+    if (showBlockConfirm) {
+      return (
+        <>
+          <div className="h-[52px] border-b border-gray-100 flex items-center px-4 shrink-0 bg-white">
+            <button onClick={() => setShowBlockConfirm(false)} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all mr-2">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <span className="text-[14px] font-medium text-gray-800 flex-1">Xác nhận</span>
+            <button onClick={onClose} className="w-8 h-8 rounded-xl hover:bg-gray-100 flex items-center justify-center text-gray-400 transition-all">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-2">{isBlocked ? "Bỏ chặn người dùng?" : "Chặn người dùng?"}</h3>
+            <p className="text-[13px] text-gray-500 text-center mb-6">
+              {isBlocked ? `${displayName} sẽ có thể liên hệ bạn trở lại sau khi bỏ chặn.` : `${displayName} sẽ không thể xem tin nhắn, gửi tin nhắn hoặc liên hệ bạn. Họ sẽ không biết bạn đã chặn họ.`}
+            </p>
+            <div className="flex gap-2 w-full">
+              <button onClick={() => setShowBlockConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">Hủy</button>
+              <button onClick={() => { setIsBlocked(v => !v); toast(isBlocked ? "Đã bỏ chặn người dùng" : "Đã chặn người dùng", { icon: <Ban className={`w-4 h-4 ${isBlocked ? "text-green-500" : "text-red-500"}`} />, duration: 2000 }); setShowBlockConfirm(false); }} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-[13px] hover:bg-red-600 transition-colors">{isBlocked ? "Bỏ chặn" : "Chặn"}</button>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // ---- Main view ----
+    return (
+      <>
+        {/* Colored gradient header */}
+        <div className="relative pt-10 pb-6 flex flex-col items-center shrink-0"
+          style={{ background: `linear-gradient(160deg, ${user.color}dd 0%, ${user.color}99 100%)` }}>
+          {(["top-3 left-8","top-6 right-12","top-2 right-6","top-8 left-16","top-4 left-28"] as const).map((pos, i) => (
+            <span key={i} className={`absolute ${pos} text-[10px] opacity-30 text-white pointer-events-none`}>♥</span>
+          ))}
+          <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 flex items-center justify-center text-white hover:bg-black/30 transition-all z-10">
+            <X className="w-4 h-4" />
+          </button>
+          <div className="w-20 h-20 rounded-full flex items-center justify-center text-[30px] font-bold text-white shadow-xl border-[3px] border-white/40" style={{ backgroundColor: user.color }}>
+            {user.isBot ? <Bot className="w-9 h-9 text-white" /> : displayName.charAt(0)}
+          </div>
+          <div className="mt-3 text-center px-4">
+            <div className="flex items-center gap-1.5 justify-center">
+              <h2 className="text-[18px] font-semibold text-white">{displayName}</h2>
+              <div className="w-2.5 h-2.5 rounded-full border-2 border-white/50" style={{ backgroundColor: status.color }} />
+            </div>
+            <p className="text-[12px] text-white/70 mt-0.5">{status.label}</p>
+          </div>
+          <div className="flex items-center gap-2.5 mt-4">
+            {[
+              { icon: <MessageSquare className="w-[18px] h-[18px]" />, label: "Nhắn tin", action: () => { onClose(); toast.success(`Mở chat với ${displayName}`); } },
+              { icon: muted ? <Bell className="w-[18px] h-[18px]" /> : <BellOff className="w-[18px] h-[18px]" />, label: muted ? "Bật thông báo" : "Tắt thông báo", action: () => { setMuted(v => !v); toast.success(muted ? "Đã bật thông báo" : "Đã tắt thông báo"); } },
+              { icon: <Phone className="w-[18px] h-[18px]" />, label: "Gọi điện", action: () => toast.success(`Đang gọi ${displayName}...`) },
+              { icon: <MoreHorizontal className="w-[18px] h-[18px]" />, label: "Thêm", action: () => {} },
+            ].map(btn => (
+              <button key={btn.label} onClick={btn.action} className="flex flex-col items-center gap-1 group">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 hover:bg-white/35 active:bg-white/10 flex items-center justify-center text-white transition-all">{btn.icon}</div>
+                <span className="text-[10px] text-white/80 whitespace-nowrap">{btn.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="overflow-y-auto flex-1 bg-gray-50">
+          {/* Contact info */}
+          <div className="bg-white mt-2 divide-y divide-gray-100">
+            <button onClick={() => { copyToClipboard(contactInfo.phone || info.phone); toast.success("Đã sao chép số điện thoại"); }} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <Phone className="w-[15px] h-[15px] text-gray-400 shrink-0" />
+              <div className="flex-1"><p className="text-[14px] text-gray-800">{contactInfo.phone || info.phone}</p><p className="text-[11px] text-gray-400 mt-0.5">Di động</p></div>
+              <Copy className="w-3.5 h-3.5 text-gray-300" />
+            </button>
+            <button onClick={() => { copyToClipboard(info.bio); toast.success("Đã sao chép giới thiệu"); }} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <Info className="w-[15px] h-[15px] text-gray-400 shrink-0" />
+              <div className="flex-1"><p className="text-[14px] text-gray-800">{info.bio}</p><p className="text-[11px] text-gray-400 mt-0.5">Giới thiệu</p></div>
+              <Copy className="w-3.5 h-3.5 text-gray-300" />
+            </button>
+            <button onClick={() => { copyToClipboard(info.username); toast.success("Đã sao chép tên người dùng"); }} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <AtSign className="w-[15px] h-[15px] text-gray-400 shrink-0" />
+              <div className="flex-1"><p className="text-[14px] font-medium" style={{ color: user.color }}>{info.username}</p><p className="text-[11px] text-gray-400 mt-0.5">Tên người dùng</p></div>
+              <Copy className="w-3.5 h-3.5 text-gray-300" />
+            </button>
+            {contactInfo.email && (
+              <button onClick={() => { copyToClipboard(contactInfo.email); toast.success("Đã sao chép email"); }} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+                <Mail className="w-[15px] h-[15px] text-gray-400 shrink-0" />
+                <div className="flex-1"><p className="text-[14px] text-gray-800">{contactInfo.email}</p><p className="text-[11px] text-gray-400 mt-0.5">Email</p></div>
+                <Copy className="w-3.5 h-3.5 text-gray-300" />
+              </button>
+            )}
+            {contactInfo.note && (
+              <div className="flex items-start gap-3 px-5 py-3.5">
+                <FileText className="w-[15px] h-[15px] text-gray-400 shrink-0 mt-0.5" />
+                <div className="flex-1"><p className="text-[14px] text-gray-800">{contactInfo.note}</p><p className="text-[11px] text-gray-400 mt-0.5">Ghi chú</p></div>
+              </div>
+            )}
+          </div>
+
+          {/* Media stats */}
+          <div className="bg-white mt-2 divide-y divide-gray-100">
+            {[
+              { icon: <ImageIcon className="w-[15px] h-[15px]" />, label: `${sharedPhotos.length} ảnh`, color: "text-sky-500", key: "photos" as const },
+              { icon: <FileIcon className="w-[15px] h-[15px]" />, label: `${ppSharedFiles.length} tệp tin`, color: "text-amber-500", key: "files" as const },
+              { icon: <Link2 className="w-[15px] h-[15px]" />, label: `${ppSharedLinks.length} liên kết chung`, color: "text-green-500", key: "links" as const },
+              { icon: <Users className="w-[15px] h-[15px]" />, label: "15 nhóm chung", color: "text-indigo-500", key: "groups" as const },
+            ].map(item => (
+              <button key={item.key} onClick={() => setActiveSubView(item.key)} className="w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+                <span className={item.color}>{item.icon}</span>
+                <span className="text-[14px] text-gray-700 flex-1">{item.label}</span>
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </button>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="bg-white mt-2 mb-3 divide-y divide-gray-100">
+            <button onClick={() => { copyToClipboard(`https://vwork.pro/u/${user.id}`).then(() => toast.success("Đã sao chép liên kết liên hệ", { duration: 2000 })); }} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <Share2 className="w-[15px] h-[15px] text-gray-400" />
+              <span className="text-[14px] text-gray-700">Chia sẻ liên hệ</span>
+            </button>
+            <button onClick={() => setShowEditContact(true)} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <Pencil className="w-[15px] h-[15px] text-gray-400" />
+              <span className="text-[14px] text-gray-700">Chỉnh sửa liên hệ</span>
+            </button>
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+              <Trash2 className="w-[15px] h-[15px] text-gray-400" />
+              <span className="text-[14px] text-gray-700">{isContact ? "Xoá liên hệ" : "Thêm liên hệ"}</span>
+            </button>
+            <button onClick={() => setShowBlockConfirm(true)} className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-red-50 active:bg-red-100 transition-all text-left">
+              <Ban className="w-[15px] h-[15px] text-red-500" />
+              <span className="text-[14px] text-red-500">{isBlocked ? `Bỏ chặn ${displayName}` : "Chặn người dùng"}</span>
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80]" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="relative w-full max-w-[360px] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col pointer-events-auto"
+          style={{ maxHeight: "min(90vh, 700px)" }}
+          onClick={e => e.stopPropagation()}
+        >
+          {renderInner()}
+        </div>
+      </div>
+
+      {/* Edit Contact Modal (nested above popup) */}
+      {showEditContact && (
+        <div className="absolute inset-0 flex items-end md:items-center justify-center pointer-events-auto z-10" onClick={() => setShowEditContact(false)}>
+          <EditContactModal
+            person={{ id: user.id, name: user.name, icon: user.name.charAt(0), color: user.color }}
+            contactInfo={contactInfo}
+            onClose={() => setShowEditContact(false)}
+            onSave={(info) => { setContactInfo(info); setShowEditContact(false); toast.success("Đã lưu thông tin liên hệ"); }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PersonalNotesInfoPanel({ onClose, sharedMedia, sharedFiles, sharedLinks, totalNotes, pinnedNotes }: {
   onClose: () => void;
   sharedMedia: ChatMessage[];
@@ -2093,9 +2544,9 @@ function PersonalProfilePanel({ onClose, person, isMuted, onToggleMute, onOpenGr
   // Use module-level commonGroups (no re-computation needed)
 
   const mediaStats = [
-    { icon: <ImageIcon className="w-[18px] h-[18px] text-gray-400" />, label: "20 ảnh", key: "photos" as const },
-    { icon: <FileIcon className="w-[18px] h-[18px] text-gray-400" />, label: "3 tệp tin", key: "files" as const },
-    { icon: <Link2 className="w-[18px] h-[18px] text-gray-400" />, label: "42 liên kết chung", key: "links" as const },
+    { icon: <ImageIcon className="w-[18px] h-[18px] text-gray-400" />, label: `${sharedPhotos.length} ảnh`, key: "photos" as const },
+    { icon: <FileIcon className="w-[18px] h-[18px] text-gray-400" />, label: `${ppSharedFiles.length} tệp tin`, key: "files" as const },
+    { icon: <Link2 className="w-[18px] h-[18px] text-gray-400" />, label: `${ppSharedLinks.length} liên kết chung`, key: "links" as const },
     { icon: <Users className="w-[18px] h-[18px] text-gray-400" />, label: "15 nhóm chung", key: "groups" as const },
   ];
 
@@ -3724,6 +4175,7 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
     { id: "sch-1", content: "Nhắc team review PR #42 trước 5pm", scheduledTime: "17:00", topicId: "tp-gen-all" },
     { id: "sch-2", content: "Gửi báo cáo sprint cuối tuần", scheduledTime: "Thứ 6, 16:30", topicId: "tp-gen-all" },
   ]);
+  const [profileUser, setProfileUser] = useState<{ id: string; name: string; color: string; isBot?: boolean } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -4376,14 +4828,23 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
   }, []);
 
   const handleTagMessageTopic = useCallback((msgId: string, topicId: string) => {
-    setMessages(prev => prev.map(m =>
-      m.id === msgId ? { ...m, chatTopicId: topicId || undefined } : m
-    ));
+    if (isPersonalChat) {
+      setMessages(prev => prev.map(m =>
+        m.id === msgId ? { ...m, chatTopicId: topicId || undefined } : m
+      ));
+      const topic = currentChatTopics.find(t => t.id === topicId);
+      if (topic) toast.success(`Đã gắn vào chủ đề "${topic.name}"`, { duration: 2000 });
+      else toast("Đã bỏ chủ đề", { duration: 1500 });
+    } else {
+      setMessages(prev => prev.map(m =>
+        m.id === msgId ? { ...m, topicId: topicId || undefined } : m
+      ));
+      const topic = localTopics.find(t => t.id === topicId);
+      if (topic) toast.success(`Đã gắn vào chủ đề "${topic.name}"`, { duration: 2000 });
+      else toast("Đã bỏ chủ đề", { duration: 1500 });
+    }
     setTagTopicModalMsg(null);
-    const topic = currentChatTopics.find(t => t.id === topicId);
-    if (topic) toast.success(`Đã gắn vào chủ đề "${topic.name}"`, { duration: 2000 });
-    else toast("Đã bỏ chủ đề", { duration: 1500 });
-  }, [currentChatTopics]);
+  }, [isPersonalChat, currentChatTopics, localTopics]);
 
   const handleCreatePoll = useCallback((question: string, options: string[], multipleChoice: boolean, anonymous: boolean) => {
     const now2 = new Date();
@@ -4659,7 +5120,7 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
       )}
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0 ${isPersonalTool ? "bg-[#f7f6f3]" : "bg-[#E8F4F8]"}`}>
         {/* Chat header */}
         <div className="h-[48px] bg-white border-b border-gray-200 flex items-center px-4 gap-3 shrink-0 relative">
           {/* Selection mode header — Telegram style */}
@@ -4719,14 +5180,14 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
             if (!pcItem) return null;
             if (pcItem.type === "dm") {
               return (
-                <div className="relative shrink-0">
+                <button className="relative shrink-0 cursor-pointer" onClick={() => setProfileUser({ id: pcItem.id, name: pcItem.name, color: pcItem.color })}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] text-white" style={{ backgroundColor: pcItem.color }}>
                     {pcItem.icon}
                   </div>
                   {pcItem.online !== undefined && (
                     <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${pcItem.online ? "bg-emerald-500" : "bg-gray-300"}`} />
                   )}
-                </div>
+                </button>
               );
             }
             return null;
@@ -4740,6 +5201,13 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
                   return <p className="text-[13px] text-gray-800 truncate">{activeGroupChat.name}</p>;
                 }
                 const pcItem = allPersonalItems.find(p => p.id === selectedPersonalChat);
+                if (pcItem?.type === "dm") {
+                  return (
+                    <button onClick={() => setProfileUser({ id: pcItem.id, name: pcItem.name, color: pcItem.color })} className="text-[13px] font-medium text-gray-800 truncate hover:underline text-left">
+                      {pcItem.name}
+                    </button>
+                  );
+                }
                 return (
                   <>
                     {pcItem?.type === "tool" && <span className="text-[15px]">{pcItem?.emoji}</span>}
@@ -5286,9 +5754,9 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
                     {isLastInGroup && (
                       <div className="relative">
                         {msg.sender.isBot ? (
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-sm"><Bot className="w-3.5 h-3.5 text-white" /></div>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-sm cursor-pointer" onClick={() => setProfileUser(msg.sender)}><Bot className="w-3.5 h-3.5 text-white" /></div>
                         ) : (
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] text-white shadow-sm" style={{ backgroundColor: msg.sender.color }}>{msg.sender.name.charAt(0)}</div>
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] text-white shadow-sm cursor-pointer" style={{ backgroundColor: msg.sender.color }} onClick={() => setProfileUser(msg.sender)}>{msg.sender.name.charAt(0)}</div>
                         )}
                         {/* Online status dot */}
                         {!msg.sender.isBot && userOnlineStatus[msg.sender.id] && (
@@ -5337,7 +5805,7 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
                       <div className={msg.type === "image" ? "px-[9px] pt-[6px]" : ""}>
                         {!isOwn && showSenderName && (
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[12px]" style={{ color: msg.sender.color }}>{msg.sender.name}</span>
+                            <span className="text-[12px] cursor-pointer hover:underline" style={{ color: msg.sender.color }} onClick={() => setProfileUser(msg.sender)}>{msg.sender.name}</span>
                             {msg.sender.isBot && <span className="text-[8px] bg-cyan-50 text-cyan-600 px-1 py-0 rounded border border-cyan-100">BOT</span>}
                             {msg.pinned && <Pin className="w-2.5 h-2.5 text-cyan-400" style={pinAnimatingIds.has(msg.id) ? { animation: "reactionBounce 0.6s ease" } : undefined} />}
                           </div>
@@ -5770,8 +6238,8 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
 
         {/* Input area */}
         {!closedTopics.has(activeTopic) && !selectionMode && !canPostInChannel && (
-          <div className="px-4 pb-4">
-            <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-[13px] text-gray-500">
+          <div className="px-2 py-2">
+            <div className="flex items-center gap-3 px-4 py-3 bg-white/90 rounded-2xl text-[13px] text-gray-500 shadow-sm">
               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
                 <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               </div>
@@ -5782,198 +6250,295 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
             </div>
           </div>
         )}
-        {!closedTopics.has(activeTopic) && !selectionMode && canPostInChannel && <div className="px-4 pb-4 relative">
-          {/* @Mention picker */}
-          {showMentionPicker && mentionMembers.length > 0 && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[200px] overflow-y-auto z-20">
-              <div className="px-3 py-2 border-b border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">Nhắc đến</p>
+        {!closedTopics.has(activeTopic) && !selectionMode && canPostInChannel && <div className="px-2 py-2">
+          {/* Reply preview bar */}
+          {replyingTo && (
+            <div className="flex items-center gap-2 px-1 pb-1.5">
+              <div className="flex-1 flex items-stretch gap-0 min-w-0 bg-white/80 rounded-xl overflow-hidden shadow-sm">
+                <div className="w-[3px] shrink-0 bg-cyan-500" />
+                <div className="px-2.5 py-1.5 min-w-0 flex-1">
+                  <p className="text-[11px] text-cyan-600 truncate">{replyingTo.sender.name}</p>
+                  <p className="text-[11px] text-gray-500 truncate">{replyingTo.content?.slice(0, 80) || "📊 Report"}</p>
+                </div>
               </div>
-              {mentionMembers.map(m => (
-                <button key={m.id} onClick={() => insertMention(m.name)}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-all text-left">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-white shrink-0" style={{ backgroundColor: m.color }}>{m.name.charAt(0)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] text-gray-800">{m.name}</p>
-                    <p className="text-[10px] text-gray-500">{m.role}</p>
-                  </div>
-                </button>
-              ))}
+              <button onClick={() => setReplyingTo(null)} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-gray-400 hover:text-gray-600 shrink-0">
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
-          {showCommands && (
-            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[320px] overflow-y-auto z-20">
-              <div className="px-3 py-2 border-b border-gray-100">
-                <p className="text-[10px] text-gray-500 uppercase tracking-wider">ChatOps Commands</p>
+          {/* Edit preview bar */}
+          {editingMsgId && (
+            <div className="flex items-center gap-2 px-1 pb-1.5">
+              <div className="flex-1 flex items-stretch gap-0 min-w-0 bg-cyan-50/90 rounded-xl overflow-hidden shadow-sm">
+                <div className="w-[3px] shrink-0 bg-cyan-500" />
+                <div className="px-2.5 py-1.5 min-w-0 flex-1 flex items-center gap-1.5">
+                  <Pencil className="w-3 h-3 text-cyan-500 shrink-0" />
+                  <p className="text-[11px] text-cyan-600 truncate">Đang chỉnh sửa tin nhắn</p>
+                </div>
               </div>
-              {slashCommands.filter(c => c.cmd.startsWith(inputValue.toLowerCase())).map(cmd => (
-                <button key={cmd.cmd} onClick={() => insertCommand(cmd.cmd)} className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-all text-left">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600 shrink-0 mt-0.5">{cmd.icon}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] text-gray-800">{cmd.cmd}</span>
-                      <span className="text-[11px] text-gray-500">— {cmd.desc}</span>
-                    </div>
-                    <p className="text-[10px] text-gray-300 mt-0.5 font-mono truncate">{cmd.example}</p>
-                  </div>
-                </button>
-              ))}
+              <button onClick={cancelEditMessage} className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center text-gray-400 hover:text-gray-600 shrink-0">
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm focus-within:border-cyan-300 focus-within:ring-2 focus-within:ring-cyan-50 transition-all">
-            {/* Reply preview bar */}
-            {replyingTo && (
-              <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
-                <div className="flex-1 flex items-stretch gap-0 min-w-0 bg-gray-50 rounded-lg overflow-hidden">
-                  <div className="w-[3px] shrink-0 bg-cyan-500" />
-                  <div className="px-2.5 py-1.5 min-w-0 flex-1">
-                    <p className="text-[11px] text-cyan-600 truncate">{replyingTo.sender.name}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{replyingTo.content?.slice(0, 80) || "📊 Report"}</p>
-                  </div>
-                </div>
-                <button onClick={() => setReplyingTo(null)} className="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 shrink-0">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-            {/* Edit preview bar */}
-            {editingMsgId && (
-              <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
-                <div className="flex-1 flex items-stretch gap-0 min-w-0 bg-cyan-50 rounded-lg overflow-hidden">
-                  <div className="w-[3px] shrink-0 bg-cyan-500" />
-                  <div className="px-2.5 py-1.5 min-w-0 flex-1 flex items-center gap-1.5">
-                    <Pencil className="w-3 h-3 text-cyan-500 shrink-0" />
-                    <p className="text-[11px] text-cyan-600 truncate">Đang chỉnh sửa tin nhắn</p>
-                  </div>
-                </div>
-                <button onClick={cancelEditMessage} className="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 shrink-0">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-            <div className="flex items-end gap-2 p-3">
-              <div className="flex items-center gap-0.5 shrink-0 pb-0.5 relative">
-                <button onClick={() => setShowAttachMenu(!showAttachMenu)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${showAttachMenu ? "bg-cyan-50 text-cyan-600" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`} title="Đính kèm">
-                  <Paperclip className="w-4 h-4" />
-                </button>
-                {isPersonalTool && (
-                  <button
-                    onClick={() => {
-                      const ta = inputRef.current;
-                      if (!ta) return;
-                      const start = ta.selectionStart ?? inputValue.length;
-                      const before = inputValue.slice(0, start);
-                      const after = inputValue.slice(start);
-                      const prefix = before.length > 0 && !before.endsWith("\n") ? "\n- [ ] " : "- [ ] ";
-                      setInputValue(before + prefix + after);
-                      requestAnimationFrame(() => { ta.focus(); const p = (before + prefix).length; ta.setSelectionRange(p, p); });
+          {/* ── MOBILE: Messenger-style [+][📷][🎤] [pill] [➤] ── */}
+          <div className="md:hidden flex items-center gap-2">
+            {/* + Attach */}
+            <div className="shrink-0 relative">
+              <button onClick={() => setShowAttachMenu(!showAttachMenu)}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${showAttachMenu ? "bg-cyan-500 text-white rotate-45" : "bg-cyan-500 text-white hover:bg-cyan-600"}`}
+                style={{ transition: "transform 0.2s, background 0.15s" }} title="Thêm">
+                <Plus className="w-[18px] h-[18px]" />
+              </button>
+              {showAttachMenu && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl border border-gray-100 shadow-2xl w-[200px] py-2 z-20">
+                  {[
+                    { icon: <FileIcon className="w-[18px] h-[18px]" />, label: "Tài liệu", color: "text-violet-500", bg: "bg-violet-50" },
+                    { icon: <FolderOpen className="w-[18px] h-[18px]" />, label: "Từ Drive", color: "text-amber-500", bg: "bg-amber-50" },
+                    ...((isGroupChat || (!isPersonalChat && !isChannelChat)) ? [{ icon: <BarChart3 className="w-[18px] h-[18px]" />, label: "Bình chọn", color: "text-indigo-500", bg: "bg-indigo-50" }] : []),
+                    ...(isPersonalTool ? [{ icon: <ListChecks className="w-[18px] h-[18px]" />, label: "Checklist", color: "text-green-500", bg: "bg-green-50" }] : []),
+                  ].map(item => (
+                    <button key={item.label} onClick={() => {
+                      setShowAttachMenu(false);
+                      const attachChatTopicId = (isPersonalChat && activeChatTopicId !== "all") ? activeChatTopicId : undefined;
+                      if (item.label === "Tài liệu") {
+                        const n = new Date();
+                        setMessages(prev => [...prev, { id: `msg-file-${Date.now()}`, type: "file", sender: minhUser, content: "Gửi file", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic, fileName: "document.pdf", fileSize: "256 KB", fileType: "pdf", chatTopicId: attachChatTopicId }]);
+                      } else if (item.label === "Bình chọn") {
+                        setShowPollModal(true);
+                      } else if (item.label === "Checklist") {
+                        const ta = inputRef.current;
+                        if (!ta) return;
+                        const start = ta.selectionStart ?? inputValue.length;
+                        const before = inputValue.slice(0, start);
+                        const after = inputValue.slice(start);
+                        const prefix = before.length > 0 && !before.endsWith("\n") ? "\n- [ ] " : "- [ ] ";
+                        setInputValue(before + prefix + after);
+                        requestAnimationFrame(() => { ta.focus(); const p = (before + prefix).length; ta.setSelectionRange(p, p); });
+                      }
                     }}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all"
-                    title="Thêm checklist">
-                    <ListChecks className="w-4 h-4" />
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+                      <div className={`w-8 h-8 rounded-xl ${item.bg} ${item.color} flex items-center justify-center shrink-0`}>{item.icon}</div>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Camera — ẩn khi đang gõ */}
+            {!inputValue.trim() && !isRecording && (
+              <button onClick={() => {
+                const n = new Date();
+                const attachChatTopicId = (isPersonalChat && activeChatTopicId !== "all") ? activeChatTopicId : undefined;
+                setMessages(prev => [...prev, { id: `msg-img-${Date.now()}`, type: "image", sender: minhUser, content: "", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic, imageUrl: "https://images.unsplash.com/photo-1665470909939-959569b20021?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600", imageCaption: "Ảnh mới gửi", chatTopicId: attachChatTopicId }]);
+              }}
+                className="w-9 h-9 rounded-full bg-cyan-500 text-white hover:bg-cyan-600 flex items-center justify-center shrink-0 transition-all" title="Ảnh / Video">
+                <Camera className="w-[17px] h-[17px]" />
+              </button>
+            )}
+
+            {/* Mic — ẩn khi đang gõ */}
+            {!inputValue.trim() && (
+              <button onClick={handleMicToggle}
+                className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${isRecording ? "bg-red-500 text-white animate-pulse" : "bg-cyan-500 text-white hover:bg-cyan-600"}`}
+                title={isRecording ? "Dừng ghi âm" : "Ghi âm"}>
+                <Mic className="w-[17px] h-[17px]" />
+              </button>
+            )}
+
+            {/* Pill */}
+            <div className="flex-1 flex items-center bg-white rounded-[22px] shadow-sm px-3.5 py-2 min-h-[36px] relative">
+              {showMentionPicker && mentionMembers.length > 0 && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[200px] overflow-y-auto z-20">
+                  <div className="px-3 py-2 border-b border-gray-100"><p className="text-[10px] text-gray-500 uppercase tracking-wider">Nhắc đến</p></div>
+                  {mentionMembers.map(m => (
+                    <button key={m.id} onClick={() => insertMention(m.name)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-all text-left">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-white shrink-0" style={{ backgroundColor: m.color }}>{m.name.charAt(0)}</div>
+                      <div className="flex-1 min-w-0"><p className="text-[12px] text-gray-800">{m.name}</p><p className="text-[10px] text-gray-500">{m.role}</p></div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showCommands && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[320px] overflow-y-auto z-20">
+                  <div className="px-3 py-2 border-b border-gray-100"><p className="text-[10px] text-gray-500 uppercase tracking-wider">ChatOps Commands</p></div>
+                  {slashCommands.filter(c => c.cmd.startsWith(inputValue.toLowerCase())).map(cmd => (
+                    <button key={cmd.cmd} onClick={() => insertCommand(cmd.cmd)} className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-all text-left">
+                      <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600 shrink-0 mt-0.5">{cmd.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2"><span className="text-[12px] text-gray-800">{cmd.cmd}</span><span className="text-[11px] text-gray-500">— {cmd.desc}</span></div>
+                        <p className="text-[10px] text-gray-300 mt-0.5 font-mono truncate">{cmd.example}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {isRecording ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                  <span className="text-[13px] text-red-500 font-medium tabular-nums">{Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, "0")}</span>
+                  <span className="flex-1 text-[12px] text-gray-400">Đang ghi âm...</span>
+                </div>
+              ) : (
+                <textarea ref={inputRef} value={inputValue} onChange={e => handleInputChange(e.target.value)} onKeyDown={handleKeyDown}
+                  placeholder={isPersonalTool ? "Nhập ghi chú..." : `Nhắn tin trong ${isChannelChat ? (activeChannelItem?.name || "Kênh") : isPersonalChat ? (activeGroupChat?.name || allPersonalItems.find(p => p.id === selectedPersonalChat)?.name || "Chat") : (currentTopic?.name || space?.name || "Chat")}...`} rows={1}
+                  className="flex-1 resize-none text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent min-h-[20px] max-h-[120px] py-0 leading-[1.4]"
+                  style={{ height: "auto" }}
+                  onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }} />
+              )}
+              {!isRecording && (
+                <div className="relative shrink-0 ml-1" ref={inputEmojiRef}>
+                  <button onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
+                    className={`w-7 h-7 flex items-center justify-center transition-all ${showInputEmojiPicker ? "text-cyan-500" : "text-gray-400 hover:text-gray-600"}`} title="Emoji">
+                    <Smile className="w-[20px] h-[20px]" />
                   </button>
-                )}
+                  {showInputEmojiPicker && (
+                    <InputEmojiPanel onSelect={(e) => { setInputValue(prev => prev + e); setShowInputEmojiPicker(false); inputRef.current?.focus(); }} searchQuery={emojiSearchQuery} onSearchChange={setEmojiSearchQuery} />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Send */}
+            {(inputValue.trim() || isRecording) && (
+              <button onClick={isRecording ? handleMicToggle : handleSend}
+                className="w-9 h-9 rounded-full bg-cyan-500 text-white hover:bg-cyan-600 flex items-center justify-center shrink-0 transition-all"
+                title={isRecording ? "Gửi âm thanh" : "Gửi"}>
+                <Send className="w-[16px] h-[16px]" />
+              </button>
+            )}
+          </div>
+
+          {/* ── DESKTOP: pill gộp [attach | textarea | emoji mic | send] ── */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Pill */}
+            <div className="flex-1 flex items-center bg-white shadow-sm rounded-2xl px-3 py-2 min-h-[40px] gap-2 relative">
+              {/* Attach inside pill */}
+              <div className="shrink-0 relative">
+                <button onClick={() => setShowAttachMenu(!showAttachMenu)}
+                  className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${showAttachMenu ? "text-cyan-500 bg-cyan-50" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
+                  style={{ transition: "transform 0.2s" }} title="Đính kèm">
+                  <Paperclip className="w-[17px] h-[17px]" />
+                </button>
                 {showAttachMenu && (
-                  <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl w-[180px] py-1.5 z-20">
+                  <div className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl border border-gray-100 shadow-2xl w-[200px] py-2 z-20">
                     {[
-                      { icon: <Camera className="w-4 h-4" />, label: "Ảnh / Video", color: "text-blue-500", bg: "bg-blue-50" },
-                      { icon: <FileIcon className="w-4 h-4" />, label: "Tài liệu", color: "text-violet-500", bg: "bg-violet-50" },
-                      { icon: <Mic className="w-4 h-4" />, label: "Tin nhắn thoại", color: "text-red-500", bg: "bg-red-50" },
-                      { icon: <FolderOpen className="w-4 h-4" />, label: "Từ Drive", color: "text-amber-500", bg: "bg-amber-50" },
-                      ...((isGroupChat || (!isPersonalChat && !isChannelChat)) ? [{ icon: <BarChart3 className="w-4 h-4" />, label: "Bình chọn", color: "text-indigo-500", bg: "bg-indigo-50" }] : []),
+                      { icon: <FileIcon className="w-[18px] h-[18px]" />, label: "Tài liệu", color: "text-violet-500", bg: "bg-violet-50" },
+                      { icon: <FolderOpen className="w-[18px] h-[18px]" />, label: "Từ Drive", color: "text-amber-500", bg: "bg-amber-50" },
+                      { icon: <ImageIcon className="w-[18px] h-[18px]" />, label: "Ảnh / Video", color: "text-sky-500", bg: "bg-sky-50" },
+                      ...((isGroupChat || (!isPersonalChat && !isChannelChat)) ? [{ icon: <BarChart3 className="w-[18px] h-[18px]" />, label: "Bình chọn", color: "text-indigo-500", bg: "bg-indigo-50" }] : []),
+                      ...(isPersonalTool ? [{ icon: <ListChecks className="w-[18px] h-[18px]" />, label: "Checklist", color: "text-green-500", bg: "bg-green-50" }] : []),
                     ].map(item => (
                       <button key={item.label} onClick={() => {
                         setShowAttachMenu(false);
-                        // Demo: send a sample image for "Ảnh / Video"
                         const attachChatTopicId = (isPersonalChat && activeChatTopicId !== "all") ? activeChatTopicId : undefined;
-                        if (item.label === "Ảnh / Video") {
+                        if (item.label === "Tài liệu") {
                           const n = new Date();
-                          setMessages(prev => [...prev, {
-                            id: `msg-img-${Date.now()}`, type: "image", sender: minhUser,
-                            content: "", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic,
-                            imageUrl: "https://images.unsplash.com/photo-1665470909939-959569b20021?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600",
-                            imageCaption: "Ảnh mới gửi", chatTopicId: attachChatTopicId
-                          }]);
-                        } else if (item.label === "Tài liệu") {
+                          setMessages(prev => [...prev, { id: `msg-file-${Date.now()}`, type: "file", sender: minhUser, content: "Gửi file", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic, fileName: "document.pdf", fileSize: "256 KB", fileType: "pdf", chatTopicId: attachChatTopicId }]);
+                        } else if (item.label === "Ảnh / Video") {
                           const n = new Date();
-                          setMessages(prev => [...prev, {
-                            id: `msg-file-${Date.now()}`, type: "file", sender: minhUser,
-                            content: "Gửi file", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic,
-                            fileName: "document.pdf", fileSize: "256 KB", fileType: "pdf", chatTopicId: attachChatTopicId
-                          }]);
+                          setMessages(prev => [...prev, { id: `msg-img-${Date.now()}`, type: "image", sender: minhUser, content: "", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic, imageUrl: "https://images.unsplash.com/photo-1665470909939-959569b20021?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600", imageCaption: "Ảnh mới gửi", chatTopicId: attachChatTopicId }]);
                         } else if (item.label === "Bình chọn") {
                           setShowPollModal(true);
-                        } else if (item.label === "Tin nhắn thoại") {
-                          const n = new Date();
-                          setMessages(prev => [...prev, {
-                            id: `msg-voice-${Date.now()}`, type: "voice", sender: minhUser,
-                            content: "", timestamp: fmt(n.getHours(), n.getMinutes()), topicId: activeTopic,
-                            voiceDuration: 8, chatTopicId: attachChatTopicId,
-                            voiceWaveform: Array.from({ length: 20 }, () => 0.2 + Math.random() * 0.8)
-                          }]);
+                        } else if (item.label === "Checklist") {
+                          const ta = inputRef.current;
+                          if (!ta) return;
+                          const start = ta.selectionStart ?? inputValue.length;
+                          const before = inputValue.slice(0, start);
+                          const after = inputValue.slice(start);
+                          const prefix = before.length > 0 && !before.endsWith("\n") ? "\n- [ ] " : "- [ ] ";
+                          setInputValue(before + prefix + after);
+                          requestAnimationFrame(() => { ta.focus(); const p = (before + prefix).length; ta.setSelectionRange(p, p); });
                         }
                       }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-all text-left">
-                        <div className={`w-7 h-7 rounded-lg ${item.bg} ${item.color} flex items-center justify-center`}>
-                          {item.icon}
-                        </div>
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+                        <div className={`w-8 h-8 rounded-xl ${item.bg} ${item.color} flex items-center justify-center shrink-0`}>{item.icon}</div>
                         {item.label}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <textarea ref={inputRef} value={inputValue} onChange={e => handleInputChange(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={isPersonalTool ? "Nhập ghi chú..." : `Nhắn tin trong ${isChannelChat ? (activeChannelItem?.name || "Kênh") : isPersonalChat ? (activeGroupChat?.name || allPersonalItems.find(p => p.id === selectedPersonalChat)?.name || "Chat") : (currentTopic?.name || space?.name || "Chat")}...`} rows={1}
-                className="flex-1 resize-none text-[13px] text-gray-700 placeholder-gray-400 focus:outline-none bg-transparent min-h-[36px] max-h-[120px] py-1.5 leading-relaxed"
-                style={{ height: "auto" }}
-                onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }} />
-              <div className="flex items-center gap-0.5 shrink-0 pb-0.5">
-                <div className="relative" ref={inputEmojiRef}>
-                  <button onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${showInputEmojiPicker ? "bg-cyan-50 text-cyan-600" : "hover:bg-gray-100 text-gray-400 hover:text-gray-600"}`} title="Emoji">
-                    <Smile className="w-4 h-4" />
-                  </button>
-                  {showInputEmojiPicker && (
-                    <InputEmojiPanel
-                      onSelect={(e) => { setInputValue(prev => prev + e); setShowInputEmojiPicker(false); inputRef.current?.focus(); }}
-                      searchQuery={emojiSearchQuery}
-                      onSearchChange={setEmojiSearchQuery}
-                    />
-                  )}
+
+              {/* Mention/Command pickers */}
+              {showMentionPicker && mentionMembers.length > 0 && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[200px] overflow-y-auto z-20">
+                  <div className="px-3 py-2 border-b border-gray-100"><p className="text-[10px] text-gray-500 uppercase tracking-wider">Nhắc đến</p></div>
+                  {mentionMembers.map(m => (
+                    <button key={m.id} onClick={() => insertMention(m.name)} className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-all text-left">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] text-white shrink-0" style={{ backgroundColor: m.color }}>{m.name.charAt(0)}</div>
+                      <div className="flex-1 min-w-0"><p className="text-[12px] text-gray-800">{m.name}</p><p className="text-[10px] text-gray-500">{m.role}</p></div>
+                    </button>
+                  ))}
                 </div>
-                {/* Send / Mic toggle */}
-                {inputValue.trim() ? (
-                  <div className="flex items-center gap-0.5">
-                    <button onClick={handleSend}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-cyan-500 text-white hover:bg-cyan-600 shadow-sm">
-                      <Send className="w-4 h-4" />
+              )}
+              {showCommands && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl border border-gray-200 shadow-xl max-h-[320px] overflow-y-auto z-20">
+                  <div className="px-3 py-2 border-b border-gray-100"><p className="text-[10px] text-gray-500 uppercase tracking-wider">ChatOps Commands</p></div>
+                  {slashCommands.filter(c => c.cmd.startsWith(inputValue.toLowerCase())).map(cmd => (
+                    <button key={cmd.cmd} onClick={() => insertCommand(cmd.cmd)} className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-gray-50 transition-all text-left">
+                      <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center text-cyan-600 shrink-0 mt-0.5">{cmd.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2"><span className="text-[12px] text-gray-800">{cmd.cmd}</span><span className="text-[11px] text-gray-500">— {cmd.desc}</span></div>
+                        <p className="text-[10px] text-gray-300 mt-0.5 font-mono truncate">{cmd.example}</p>
+                      </div>
                     </button>
-                    <button onClick={() => setShowScheduleModal(true)}
-                      className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-violet-50 text-gray-300 hover:text-violet-500" title="Hẹn giờ gửi">
-                      <CalendarClock className="w-3.5 h-3.5" />
+                  ))}
+                </div>
+              )}
+
+              {/* Textarea */}
+              {isRecording ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                  <span className="text-[13px] text-red-500 font-medium tabular-nums">{Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, "0")}</span>
+                  <span className="flex-1 text-[12px] text-gray-400">Đang ghi âm...</span>
+                </div>
+              ) : (
+                <textarea ref={inputRef} value={inputValue} onChange={e => handleInputChange(e.target.value)} onKeyDown={handleKeyDown}
+                  placeholder={isPersonalTool ? "Nhập ghi chú..." : `Nhắn tin trong ${isChannelChat ? (activeChannelItem?.name || "Kênh") : isPersonalChat ? (activeGroupChat?.name || allPersonalItems.find(p => p.id === selectedPersonalChat)?.name || "Chat") : (currentTopic?.name || space?.name || "Chat")}...`} rows={1}
+                  className="flex-1 resize-none text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent min-h-[20px] max-h-[120px] py-0 leading-[1.4]"
+                  style={{ height: "auto" }}
+                  onInput={e => { const t = e.currentTarget; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }} />
+              )}
+
+              {/* Right icons inside pill: emoji + mic */}
+              {!isRecording && (
+                <>
+                  <div className="relative shrink-0" ref={inputEmojiRef}>
+                    <button onClick={() => setShowInputEmojiPicker(!showInputEmojiPicker)}
+                      className={`w-7 h-7 flex items-center justify-center transition-all ${showInputEmojiPicker ? "text-cyan-500" : "text-gray-400 hover:text-gray-600"}`} title="Emoji">
+                      <Smile className="w-[18px] h-[18px]" />
                     </button>
+                    {showInputEmojiPicker && (
+                      <InputEmojiPanel onSelect={(e) => { setInputValue(prev => prev + e); setShowInputEmojiPicker(false); inputRef.current?.focus(); }} searchQuery={emojiSearchQuery} onSearchChange={setEmojiSearchQuery} />
+                    )}
                   </div>
-                ) : isRecording ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 bg-red-50 rounded-full px-3 py-1.5">
-                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      <span className="text-[11px] text-red-600 tabular-nums">{Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, "0")}</span>
-                    </div>
-                    <button onClick={handleMicToggle}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-red-500 text-white hover:bg-red-600 shadow-sm" title="Dừng & gửi">
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={handleMicToggle} className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:bg-gray-100 text-gray-400 hover:text-gray-600" title="Ghi âm">
-                    <Mic className="w-4 h-4" />
+                  <button onClick={handleMicToggle}
+                    className={`w-7 h-7 flex items-center justify-center transition-all shrink-0 ${isRecording ? "text-red-500" : "text-gray-400 hover:text-gray-600"}`} title="Ghi âm">
+                    <Mic className="w-[17px] h-[17px]" />
                   </button>
-                )}
-              </div>
+                </>
+              )}
             </div>
-            
+
+            {/* Send button outside pill */}
+            {(inputValue.trim() || isRecording) && (
+              <button onClick={isRecording ? handleMicToggle : handleSend}
+                className="w-9 h-9 rounded-full bg-cyan-500 text-white hover:bg-cyan-600 flex items-center justify-center shrink-0 transition-all"
+                title={isRecording ? "Gửi âm thanh" : "Gửi"}>
+                <Send className="w-[16px] h-[16px]" />
+              </button>
+            )}
+
+            {/* Schedule send */}
+            {inputValue.trim() && (
+              <button onClick={() => setShowScheduleModal(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/60 text-gray-400 hover:text-violet-500 transition-all shrink-0" title="Hẹn giờ gửi">
+                <CalendarClock className="w-[15px] h-[15px]" />
+              </button>
+            )}
           </div>
         </div>}
       </div>
@@ -5998,6 +6563,11 @@ export function ChatView({ tasks, onTaskClick, onStatusChange, onAddTask, onSave
             pinnedNotes={topicMessages.filter(m => m.pinned).length}
           />
         </div>
+      )}
+
+      {/* User Profile Panel */}
+      {profileUser && (
+        <UserProfilePanel user={profileUser} onClose={() => setProfileUser(null)} />
       )}
 
       {/* Channel Manage Panel */}

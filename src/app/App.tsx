@@ -26,6 +26,7 @@ import { ELearningView } from "./components/ELearningView";
 import { ReportsView } from "./components/ReportsView";
 import { GitDevOpsView } from "./components/GitDevOpsView";
 import { BotAIView } from "./components/BotAIView";
+import { MyWorkView } from "./components/MyWorkView";
 import { InboxView } from "./components/InboxView";
 import { BacklogView } from "./components/BacklogView";
 import { EpicCreateModal } from "./components/EpicCreateModal";
@@ -39,7 +40,7 @@ import { PersonalSidebar } from "./components/PersonalSidebar";
 import { ChannelSidebar } from "./components/ChannelSidebar";
 import { BottomNavBar } from "./components/BottomNavBar";
 import { AdminProceduresSidebar } from "./components/AdminProceduresSidebar";
-import { ProcedureDetailView } from "./components/ProcedureDetailModal";
+import { AdminProceduresView } from "./components/ProcedureDetailModal";
 import { ChannelDetailSidebar, getChannelItemName } from "./components/ChannelDetailSidebar";
 import { ChannelItemDetailView } from "./components/ChannelItemDetailView";
 import { CrmInvoiceProvider } from "./context/CrmInvoiceContext";
@@ -318,6 +319,7 @@ export default function App() {
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [channels, setChannels] = useState<ChannelItem[]>(defaultChannelItems);
   const [selectedProcedure, setSelectedProcedure] = useState<string | null>(null);
+  const [adminFilter, setAdminFilter] = useState("all");
   const [selectedChannelItem, setSelectedChannelItem] = useState<string | null>(null);
   const [publishedAnnouncements, setPublishedAnnouncements] = useState<{ id: string; channelId: string; name: string; emoji: string; subtitle: string; category: string; badge: string; description: string; stats: { label: string; value: string }[]; attachment: string; createdAt: string; publishedBy: string }[]>([]);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
@@ -602,6 +604,30 @@ export default function App() {
     }
   }, [extraDMs]);
 
+  const handleGoToChat = useCallback((task: Task) => {
+    if (task.projectId) {
+      // Navigate to project chat — show ProjectsSidebar + topics + chat (3-panel layout)
+      setSelectedSpace(task.projectId);
+      setCurrentView("chat");
+      setShowProjectsSidebar(true);
+      setShowPersonalSidebar(false);
+      setShowChannelSidebar(false);
+      setMobileProjectLevel("detail");
+    } else {
+      // No project — open DM with the other party
+      const CURRENT_USER_ID = "u1";
+      const otherMember =
+        task.assignee?.id !== CURRENT_USER_ID
+          ? task.assignee
+          : task.reporterId && task.reporterId !== CURRENT_USER_ID
+          ? teamMembers.find(m => m.id === task.reporterId)
+          : null;
+      if (otherMember) {
+        handleStartDM(otherMember.name, otherMember.id);
+      }
+    }
+  }, [handleStartDM]);
+
   const handleMobileSectionChange = useCallback((section: "personal" | "channel" | "project") => {
     setMobileSection(section);
     setMobileProjectLevel("list");
@@ -664,8 +690,8 @@ export default function App() {
       case "calendar": return <CalendarView tasks={filteredTasks} onTaskClick={handleTaskClick} selectedProject={selectedProject} onSaveTask={handleSaveTask} onCreateTask={handleCreateTaskOnDate} />;
       case "gantt": return <GanttView tasks={filteredTasks} onTaskClick={handleTaskClick} onSaveTask={handleSaveTask} onDeleteTask={handleDeleteTask} onAddTask={handleQuickAddTask} selectedProject={selectedProject} />;
       case "chat": {
-        if (selectedProcedure && selectedChannel === "ch-admin" && selectedSpace === "sp-channel") {
-          return <ProcedureDetailView procedureId={selectedProcedure} onClose={() => setSelectedProcedure(null)} />;
+        if (selectedChannel === "ch-admin" && selectedSpace === "sp-channel") {
+          return <AdminProceduresView sidebarFilter={adminFilter} />;
         }
         const showDetailView = !!(selectedChannelItem && selectedChannel && selectedChannel !== "ch-admin" && selectedSpace === "sp-channel");
         return (
@@ -757,6 +783,7 @@ export default function App() {
       case "reports": return <ReportsView tasks={filteredTasks} />;
       case "git_devops": return <GitDevOpsView />;
       case "bot_ai": return <BotAIView />;
+      case "mywork": return <MyWorkView tasks={tasks} onTaskClick={handleTaskClick} onAddTask={handleAddTask} onSaveTask={handleSaveTask} />;
       default: return <Dashboard tasks={filteredTasks} onTaskClick={handleTaskClick} />;
     }
   };
@@ -813,6 +840,7 @@ export default function App() {
           onClose={() => setShowProjectsSidebar(false)}
           activeSection={mobileSection}
           onSectionChange={handleMobileSectionChange}
+          onViewChange={view => { setCurrentView(view); setShowProjectsSidebar(false); }}
         />
       )}
       {showPersonalSidebar && (
@@ -829,6 +857,7 @@ export default function App() {
           onSectionChange={handleMobileSectionChange}
           notifCount={notifCount}
           onToggleNotif={() => setShowNotifPanel(p => !p)}
+          onViewChange={view => { setCurrentView(view); setShowPersonalSidebar(false); }}
         />
       )}
       {showChannelSidebar && (
@@ -842,9 +871,13 @@ export default function App() {
             setSelectedProcedure(null);
             setNavHistory([]);
             setNavIndex(-1);
-            setMobileShowChannelChat(false);
-            if (window.innerWidth < 768) setShowChannelSidebar(false);
-            else setShowChannelSidebar(true);
+            if (window.innerWidth < 768) {
+              setShowChannelSidebar(false);
+              setMobileShowChannelChat(id.startsWith("ch-new-"));
+            } else {
+              setMobileShowChannelChat(false);
+              setShowChannelSidebar(true);
+            }
           }}
           onClose={() => setShowChannelSidebar(false)}
           channels={channels}
@@ -856,9 +889,9 @@ export default function App() {
       {showChannelSidebar && selectedChannel === "ch-admin" && (
         <div className="hidden md:contents">
           <AdminProceduresSidebar
-            selectedProcedure={selectedProcedure}
-            onProcedureSelect={setSelectedProcedure}
-            onClose={() => setSelectedProcedure(null)}
+            activeFilter={adminFilter}
+            onFilterChange={setAdminFilter}
+            onClose={() => setShowChannelSidebar(false)}
           />
         </div>
       )}
@@ -1027,14 +1060,14 @@ export default function App() {
           />
         </div>
       )}
-      {!(showPersonalSidebar && !selectedPersonalChat) && !(showChannelSidebar && !selectedChannel) && !(showProjectsSidebar && !selectedSpace) && !(!showChannelSidebar && selectedChannel && selectedChannel !== "ch-admin" && selectedSpace === "sp-channel" && !selectedChannelItem && !mobileShowChannelChat) && <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
+      {!(showPersonalSidebar && !selectedPersonalChat) && !(showChannelSidebar && !selectedChannel) && !(showProjectsSidebar && !selectedSpace) && !(!showChannelSidebar && selectedChannel && selectedChannel !== "ch-admin" && selectedSpace === "sp-channel" && !selectedChannelItem && !mobileShowChannelChat) && <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 overflow-hidden">
         <TopBar currentView={currentView} onViewChange={setCurrentView} selectedSpace={selectedSpace} onSpaceSelect={setSelectedSpace} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} onAddTask={handleAddTask} searchQuery={searchQuery} onSearchChange={setSearchQuery} filterStatus={filterStatus} onFilterStatusChange={setFilterStatus} selectedChannel={selectedChannel} selectedPersonalChat={selectedPersonalChat} selectedProcedure={selectedProcedure} selectedChannelItem={selectedChannelItem} channels={channels} groupChats={groupChats} extraDMs={extraDMs} hideMobileViewSwitcher={selectedSpace !== "sp-personal" && selectedSpace !== "sp-channel" && !showProjectsSidebar && mobileProjectLevel !== "list"} onClearChannelItem={() => setSelectedChannelItem(null)} onClearProcedure={() => setSelectedProcedure(null)} onBack={
           selectedPersonalChat && selectedSpace === "sp-personal"
             ? () => setSelectedPersonalChat(null)
             : selectedChannelItem && selectedChannel && selectedSpace === "sp-channel"
             ? () => setSelectedChannelItem(null)
             : mobileShowChannelChat && selectedChannel && selectedSpace === "sp-channel"
-            ? () => setMobileShowChannelChat(false)
+            ? () => { setMobileShowChannelChat(false); if (selectedChannel?.startsWith("ch-new-")) setShowChannelSidebar(true); }
             : selectedChannel && selectedSpace === "sp-channel" && !showChannelSidebar
             ? () => setShowChannelSidebar(true)
             : mobileProjectLevel === "view" && selectedSpace && selectedSpace !== "sp-personal" && selectedSpace !== "sp-channel"
@@ -1343,6 +1376,7 @@ export default function App() {
             nextTaskId={nextTaskId}
             onNavigate={handleNavigate}
             customStatusConfig={mergedStatusConfig}
+            onGoToChat={handleGoToChat}
           />
         );
       })()}

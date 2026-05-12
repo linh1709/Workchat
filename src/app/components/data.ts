@@ -40,7 +40,7 @@ export interface Task {
   tags: string[];
   subtasks?: { id: string; title: string; done: boolean }[];
   createdAt: string;
-  projectId: string;
+  projectId?: string;
   epicId?: string;
   storyPoints?: number;
   timeEstimate?: number;
@@ -425,6 +425,7 @@ export const initialTasks: Task[] = [
       { id: "st2", title: "High-fidelity mockup", done: false },
       { id: "st3", title: "Responsive design", done: false },
     ], createdAt: "2026-03-10", projectId: "p1", epicId: "ep2", storyPoints: 8, timeEstimate: 480, timeSpent: 225, sprintId: "sp1",
+    reporterId: "u1",
     dependencies: [], watchers: ["u1", "u3"],
     comments: [
       { id: "c1", userId: "u1", content: "Wireframe trông rất tốt, Hương tiếp tục nhé!", timestamp: "2026-03-12T09:00:00" },
@@ -440,26 +441,86 @@ export const initialTasks: Task[] = [
       { id: "cli3", text: "Icons set chosen", done: false },
     ]}]
   },
-  { id: "t2", title: "Implement authentication system", description: "Set up OAuth 2.0 + JWT token refresh", type: "story", status: "in_progress", priority: "urgent", assignee: teamMembers[2], dueDate: "2026-03-18", startDate: "2026-03-08", tags: ["backend", "security"], subtasks: [{ id: "st4", title: "Login/Register API", done: true }, { id: "st5", title: "JWT middleware", done: true }, { id: "st6", title: "OAuth integration", done: false }], createdAt: "2026-03-08", projectId: "p1", epicId: "ep1", storyPoints: 13, timeEstimate: 960, timeSpent: 620, sprintId: "sp1", dependencies: ["t6"], watchers: ["u1"], comments: [{ id: "c3", userId: "u3", content: "JWT middleware done, moving to OAuth", timestamp: "2026-03-14T16:00:00" }], activityLog: [{ id: "a3", userId: "u3", action: "changed", field: "status", oldValue: "todo", newValue: "in_progress", timestamp: "2026-03-09T08:00:00" }] },
+  { id: "t2", title: "Implement authentication system", description: "Set up OAuth 2.0 + JWT token refresh", type: "story", status: "in_progress", priority: "urgent", assignee: teamMembers[2], dueDate: "2026-03-18", startDate: "2026-03-08", tags: ["backend", "security"], subtasks: [{ id: "st4", title: "Login/Register API", done: true }, { id: "st5", title: "JWT middleware", done: true }, { id: "st6", title: "OAuth integration", done: false }], createdAt: "2026-03-08", projectId: "p1", epicId: "ep1", storyPoints: 13, timeEstimate: 960, timeSpent: 620, sprintId: "sp1", reporterId: "u1", dependencies: ["t6"], watchers: ["u1"], comments: [{ id: "c3", userId: "u3", content: "JWT middleware done, moving to OAuth", timestamp: "2026-03-14T16:00:00" }], activityLog: [{ id: "a3", userId: "u3", action: "changed", field: "status", oldValue: "todo", newValue: "in_progress", timestamp: "2026-03-09T08:00:00" }] },
   { id: "t3", title: "Database schema optimization", description: "Review và tối ưu hóa cấu trúc DB", type: "task", status: "todo", priority: "normal", assignee: teamMembers[3], dueDate: "2026-03-25", startDate: "2026-03-18", tags: ["backend", "database"], createdAt: "2026-03-12", projectId: "p3", epicId: "ep6", storyPoints: 5, timeEstimate: 360, timeSpent: 0, sprintId: "sp1", dependencies: ["t2"] },
   { id: "t4", title: "Unit test cho payment module", description: "Viết unit test coverage > 80%", type: "task", status: "todo", priority: "high", assignee: teamMembers[4], dueDate: "2026-03-22", startDate: "2026-03-16", tags: ["testing", "backend"], createdAt: "2026-03-11", projectId: "p3", epicId: "ep6", storyPoints: 8, timeEstimate: 480, timeSpent: 0, sprintId: "sp1" },
   { id: "t5", title: "Landing page cho chiến dịch mùa hè", description: "Design và code landing page marketing", type: "story", status: "in_review", priority: "high", assignee: teamMembers[1], dueDate: "2026-03-19", startDate: "2026-03-09", tags: ["design", "marketing"], createdAt: "2026-03-09", projectId: "p4", epicId: "ep7", storyPoints: 8, timeEstimate: 600, timeSpent: 540, sprintId: "sp1" },
   { id: "t6", title: "Setup CI/CD pipeline", description: "Configure GitHub Actions cho auto deploy", type: "story", status: "done", priority: "urgent", assignee: teamMembers[2], dueDate: "2026-03-15", startDate: "2026-03-05", tags: ["devops"], createdAt: "2026-03-05", projectId: "p1", epicId: "ep3", storyPoints: 5, timeEstimate: 240, timeSpent: 300, sprintId: "sp1" },
-  { id: "t7", title: "Mobile app onboarding flow", description: "Tạo flow onboarding cho user mới", type: "story", status: "todo", priority: "normal", assignee: teamMembers[1], dueDate: "2026-03-28", startDate: "2026-03-20", tags: ["design", "mobile"], createdAt: "2026-03-13", projectId: "p2", epicId: "ep4", storyPoints: 8, timeEstimate: 360, timeSpent: 0, sprintId: "sp2" },
+  { id: "t7", title: "Mobile app onboarding flow", description: "Tạo flow onboarding cho user mới", type: "story", status: "todo", priority: "normal", assignee: teamMembers[1], dueDate: "2026-03-28", startDate: "2026-03-20", tags: ["design", "mobile"], createdAt: "2026-03-13", projectId: "p2", epicId: "ep4", storyPoints: 8, timeEstimate: 360, timeSpent: 0, sprintId: "sp2", reporterId: "u1" },
   { id: "t8", title: "API rate limiting", description: "Implement rate limiter cho public endpoints", type: "story", status: "in_progress", priority: "high", assignee: teamMembers[3], dueDate: "2026-03-21", startDate: "2026-03-10", tags: ["backend", "security"], createdAt: "2026-03-10", projectId: "p3", epicId: "ep6", storyPoints: 5, timeEstimate: 300, timeSpent: 180, sprintId: "sp1" },
   { id: "t9", title: "Design system documentation", description: "Viết docs cho design tokens và components", type: "task", status: "in_review", priority: "normal", assignee: teamMembers[1], dueDate: "2026-03-23", startDate: "2026-03-07", tags: ["design", "docs"], createdAt: "2026-03-07", projectId: "p5", storyPoints: 5, timeEstimate: 420, timeSpent: 380, sprintId: "sp1" },
-  { id: "t10", title: "Social media content calendar", description: "Lên kế hoạch content Q2 2026", type: "task", status: "todo", priority: "low", assignee: teamMembers[5], dueDate: "2026-03-30", startDate: "2026-03-22", tags: ["marketing", "content"], createdAt: "2026-03-14", projectId: "p4", epicId: "ep7", storyPoints: 3, timeEstimate: 240, timeSpent: 0, sprintId: "sp2" },
+  { id: "t10", title: "Social media content calendar", description: "Lên kế hoạch content Q2 2026", type: "task", status: "todo", priority: "low", assignee: teamMembers[5], dueDate: "2026-03-30", startDate: "2026-03-22", tags: ["marketing", "content"], createdAt: "2026-03-14", projectId: "p4", epicId: "ep7", storyPoints: 3, timeEstimate: 240, timeSpent: 0, sprintId: "sp2", reporterId: "u1" },
   { id: "t11", title: "Performance audit", description: "Lighthouse audit và fix các issues", type: "task", status: "done", priority: "high", assignee: teamMembers[2], dueDate: "2026-03-14", startDate: "2026-03-06", tags: ["frontend", "performance"], createdAt: "2026-03-06", projectId: "p1", epicId: "ep3", storyPoints: 5, timeEstimate: 300, timeSpent: 280, sprintId: "sp1" },
   { id: "t12", title: "Push notification system", description: "Implement Firebase Cloud Messaging", type: "story", status: "todo", priority: "normal", assignee: teamMembers[3], dueDate: "2026-04-01", startDate: "2026-03-24", tags: ["mobile", "backend"], createdAt: "2026-03-15", projectId: "p2", epicId: "ep5", storyPoints: 8, timeEstimate: 480, timeSpent: 0, sprintId: "sp2" },
   { id: "t13", title: "Component library - Buttons", description: "Tạo button variants cho UI Kit", type: "task", status: "done", priority: "normal", assignee: teamMembers[1], dueDate: "2026-03-12", startDate: "2026-03-04", tags: ["design", "ui-kit"], createdAt: "2026-03-04", projectId: "p6", storyPoints: 3, timeEstimate: 180, timeSpent: 200, sprintId: "sp1" },
   { id: "t14", title: "SEO optimization", description: "Meta tags, schema markup, sitemap", type: "task", status: "in_progress", priority: "normal", assignee: teamMembers[5], dueDate: "2026-03-24", startDate: "2026-03-11", tags: ["marketing", "frontend"], createdAt: "2026-03-11", projectId: "p4", epicId: "ep7", storyPoints: 5, timeEstimate: 360, timeSpent: 120, sprintId: "sp1" },
-  { id: "t15", title: "E2E testing với Playwright", description: "Setup và viết E2E tests cho critical flows", type: "story", status: "todo", priority: "high", assignee: teamMembers[4], dueDate: "2026-03-26", startDate: "2026-03-18", tags: ["testing", "devops"], createdAt: "2026-03-13", projectId: "p1", epicId: "ep3", storyPoints: 8, timeEstimate: 600, timeSpent: 0, sprintId: "sp2" },
+  { id: "t15", title: "E2E testing với Playwright", description: "Setup và viết E2E tests cho critical flows", type: "story", status: "todo", priority: "high", assignee: teamMembers[4], dueDate: "2026-03-26", startDate: "2026-03-18", tags: ["testing", "devops"], createdAt: "2026-03-13", projectId: "p1", epicId: "ep3", storyPoints: 8, timeEstimate: 600, timeSpent: 0, sprintId: "sp2", reporterId: "u1" },
   { id: "t16", title: "Dark mode support", description: "Thêm dark mode cho toàn bộ UI", type: "story", status: "todo", priority: "normal", assignee: teamMembers[1], tags: ["design", "frontend"], createdAt: "2026-03-15", projectId: "p1", epicId: "ep2", storyPoints: 5, timeEstimate: 360, timeSpent: 0 },
   { id: "t17", title: "Accessibility audit (WCAG 2.1)", description: "Kiểm tra và fix các vấn đề accessibility", type: "task", status: "todo", priority: "high", assignee: teamMembers[2], tags: ["frontend", "testing"], createdAt: "2026-03-16", projectId: "p1", storyPoints: 5, timeEstimate: 300, timeSpent: 0 },
   { id: "t18", title: "Refactor auth middleware", description: "Tách auth middleware thành module riêng", type: "task", status: "todo", priority: "normal", tags: ["backend", "security"], createdAt: "2026-03-17", projectId: "p1", epicId: "ep1", storyPoints: 3, timeEstimate: 180, timeSpent: 0 },
   { id: "t19", title: "Biometric login cho mobile", description: "Face ID / Fingerprint authentication", type: "story", status: "todo", priority: "normal", assignee: teamMembers[3], tags: ["mobile", "security"], createdAt: "2026-03-14", projectId: "p2", epicId: "ep4", storyPoints: 8, timeEstimate: 480, timeSpent: 0 },
   { id: "t20", title: "Caching layer với Redis", description: "Implement Redis cache cho các API query nặng", type: "task", status: "todo", priority: "high", assignee: teamMembers[4], tags: ["backend", "database"], createdAt: "2026-03-15", projectId: "p3", storyPoints: 5, timeEstimate: 360, timeSpent: 0 },
   { id: "t21", title: "Email newsletter template", description: "Thiết kế HTML email template cho chiến dịch", type: "task", status: "todo", priority: "low", assignee: teamMembers[5], tags: ["design", "marketing"], createdAt: "2026-03-16", projectId: "p4", epicId: "ep7", storyPoints: 3, timeEstimate: 240, timeSpent: 0 },
+
+  // ── Tasks assigned to u1 (Nguyễn Minh - Project Manager) ──
+  {
+    id: "t22", title: "Sprint planning Q2 2026", description: "Lên kế hoạch sprint cho Q2, phân công task cho team",
+    type: "task", status: "in_progress", priority: "urgent",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-20", startDate: "2026-03-18",
+    tags: ["devops"], createdAt: "2026-03-18",
+    projectId: "p1", storyPoints: 5, timeEstimate: 300, timeSpent: 120, sprintId: "sp1",
+    subtasks: [
+      { id: "st22a", title: "Thu thập velocity từ sprint cũ", done: true },
+      { id: "st22b", title: "Ước tính story points", done: true },
+      { id: "st22c", title: "Phân công task cho team", done: false },
+    ],
+  },
+  {
+    id: "t23", title: "Review & merge PR authentication", description: "Code review toàn bộ PR liên quan đến auth module trước khi merge",
+    type: "task", status: "in_review", priority: "high",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-19", startDate: "2026-03-17",
+    tags: ["backend", "security"], createdAt: "2026-03-17",
+    projectId: "p1", epicId: "ep1", storyPoints: 3, timeEstimate: 180, timeSpent: 150, sprintId: "sp1",
+  },
+  {
+    id: "t24", title: "Cập nhật roadmap sản phẩm", description: "Cập nhật product roadmap Q2-Q3 theo feedback từ stakeholder",
+    type: "task", status: "todo", priority: "high",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-25", startDate: "2026-03-20",
+    tags: ["docs"], createdAt: "2026-03-18",
+    projectId: "p2", storyPoints: 3, timeEstimate: 240, timeSpent: 0,
+  },
+  {
+    id: "t25", title: "Báo cáo tiến độ dự án tuần 12", description: "Tổng hợp báo cáo tiến độ gửi stakeholder và ban lãnh đạo",
+    type: "task", status: "done", priority: "normal",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-15", startDate: "2026-03-14",
+    tags: ["docs"], createdAt: "2026-03-14",
+    projectId: "p1", storyPoints: 2, timeEstimate: 120, timeSpent: 110, sprintId: "sp1",
+  },
+  {
+    id: "t26", title: "Họp kickoff dự án Mobile App", description: "Tổ chức buổi họp kickoff, giới thiệu scope và timeline",
+    type: "task", status: "todo", priority: "normal",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-27", startDate: "2026-03-25",
+    tags: ["mobile"], createdAt: "2026-03-18",
+    projectId: "p2", epicId: "ep4", storyPoints: 2, timeEstimate: 120, timeSpent: 0, sprintId: "sp2",
+  },
+  {
+    id: "t27", title: "Định nghĩa KPI cho chiến dịch marketing", description: "Xác định các chỉ số KPI và target cho Social Campaign Q2",
+    type: "story", status: "in_progress", priority: "high",
+    assignee: teamMembers[0], reporterId: "u1",
+    dueDate: "2026-03-22", startDate: "2026-03-16",
+    tags: ["marketing"], createdAt: "2026-03-16",
+    projectId: "p4", epicId: "ep7", storyPoints: 5, timeEstimate: 360, timeSpent: 200, sprintId: "sp1",
+    subtasks: [
+      { id: "st27a", title: "Phân tích dữ liệu Q1", done: true },
+      { id: "st27b", title: "Đặt target Q2", done: false },
+    ],
+  },
+
 ];
 
 export const statusConfig = {

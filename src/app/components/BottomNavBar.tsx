@@ -172,7 +172,7 @@ function NavTab({
     >
       {active && (
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] rounded-full"
+          className="absolute top-[3px] left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-full"
           style={{ backgroundColor: activeColor }}
         />
       )}

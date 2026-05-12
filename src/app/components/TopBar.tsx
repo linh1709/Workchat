@@ -459,6 +459,7 @@ export function TopBar({
   const showTabs = isProject && openTabIds.includes(currentView);
 
   const viewTitles: Record<string, string> = {
+    mywork: "Công việc của tôi",
     dashboard: "Home", inbox: "Inbox", docs: "Docs", goals: "Goals", sprints: "Sprints",
     dashboards: "Dashboards", timetracking: "Time Tracking", workload: "Workload",
     automations: "Automations", activity: "Activity", whiteboard: "Whiteboard",
@@ -481,7 +482,7 @@ export function TopBar({
           </button>
         )}
         {/* Header: Space info or view title */}
-        {space ? (
+        {space && currentView !== "mywork" ? (
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {space.category === "channel" ? (
               <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">

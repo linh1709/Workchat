@@ -7,7 +7,7 @@ import {
   Activity, StickyNote, Lightbulb, PenTool, TextCursorInput,
   CalendarDays, User, Hash, FolderKanban,
   GraduationCap, Cpu, UsersRound, Gamepad2,
-  Share2, MoreHorizontal, PanelLeftClose, PanelLeftOpen
+  Share2, MoreHorizontal, PanelLeftClose, PanelLeftOpen, CheckSquare
 } from "lucide-react";
 import { spaces, spaceCategories, type Space, type SpaceCategory, personalChatItems } from "./data";
 import { channelItems } from "./data";

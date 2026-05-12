@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -70,6 +71,7 @@
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "docx": "^9.6.1",
+    "gh-pages": "^6.3.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },

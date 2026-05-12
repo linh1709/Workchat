@@ -438,15 +438,15 @@ export function OKRView() {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-50/50 p-6" onClick={() => setContextMenu(null)}>
+    <div className="flex-1 overflow-auto bg-gray-50/50 p-4 md:p-6" onClick={() => setContextMenu(null)}>
       <div>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-gray-900 tracking-tight flex items-center gap-2"><Target className="w-5 h-5 text-cyan-600" /> OKR — Mục tiêu & Kết quả then chốt</h2>
-            <p className="text-[12px] text-gray-400 mt-1">Theo dõi mục tiêu chiến lược của dự án</p>
+            <h2 className="text-gray-900 tracking-tight flex items-center gap-2 text-[15px] md:text-base"><Target className="w-5 h-5 text-cyan-600 shrink-0" /> OKR — Mục tiêu & Kết quả then chốt</h2>
+            <p className="text-[12px] text-gray-400 mt-0.5">Theo dõi mục tiêu chiến lược của dự án</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-0.5 bg-gray-100 rounded-lg p-0.5">
               {([{ k: "all" as const, l: "Tất cả" }, { k: "on_track" as const, l: "Đúng" }, { k: "at_risk" as const, l: "Rủi ro" }, { k: "behind" as const, l: "Chậm" }]).map(f => (
                 <button key={f.k} onClick={() => setFilterStatus(f.k)} className={`px-2.5 py-1 text-[10px] rounded-md transition-all ${filterStatus === f.k ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}>{f.l}</button>
@@ -460,7 +460,7 @@ export function OKRView() {
               <option>Q1 2026</option><option>Q2 2026</option><option>Q3 2026</option><option>Q4 2026</option>
             </select>
             <button onClick={() => { setEditingObj(null); setObjForm({ title: "", description: "", owner: "u1", quarter: selectedQuarter }); setShowObjModal(true); }}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-[12px] px-4 py-2 rounded-xl hover:from-cyan-600 hover:to-teal-600 transition-all shadow-sm">
+              className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-[12px] px-3 py-1.5 rounded-xl hover:from-cyan-600 hover:to-teal-600 transition-all shadow-sm">
               <Plus className="w-3.5 h-3.5" /> Thêm OKR
             </button>
           </div>
@@ -1652,15 +1652,15 @@ export function ProjectDashboardView({ tasks }: { tasks: Task[] }) {
   const timePct = totalEstimate > 0 ? Math.round((totalSpent / totalEstimate) * 100) : 0;
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-50/50 p-6">
+    <div className="flex-1 overflow-auto bg-gray-50/50 p-4 md:p-6">
       <div>
-        <div className="flex items-center justify-between mb-5">
-          <div><h2 className="text-gray-900 tracking-tight flex items-center gap-2"><BarChart3 className="w-5 h-5 text-indigo-600" /> Tổng quan dự án</h2><p className="text-[12px] text-gray-400 mt-1">Biểu đồ, thống kê & tiến độ tổng thể</p></div>
-          <span className="text-[11px] text-gray-400">Cập nhật: 17/03/2026</span>
+        <div className="flex items-center justify-between mb-4">
+          <div><h2 className="text-gray-900 tracking-tight flex items-center gap-2 text-[15px] md:text-base"><BarChart3 className="w-5 h-5 text-indigo-600 shrink-0" /> Tổng quan dự án</h2><p className="text-[12px] text-gray-400 mt-0.5">Biểu đồ, thống kê & tiến độ tổng thể</p></div>
+          <span className="text-[11px] text-gray-400 shrink-0">Cập nhật: 17/03/2026</span>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           {[{ l: "Tổng tasks", v: total, c: "#0891b2", s: `${done} hoàn thành` }, { l: "Đang xử lý", v: inProgress + inReview, c: "#7c3aed", s: `${inProgress} làm · ${inReview} review` }, { l: "Quá hạn", v: overdue, c: "#dc2626", s: `${urgent} khẩn cấp` }, { l: "Thời gian", v: `${Math.round(totalSpent / 60)}h`, c: "#059669", s: `/ ${Math.round(totalEstimate / 60)}h ước tính` }].map(s => (
             <div key={s.l} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm hover:shadow-md transition-all">
               <p className="text-2xl tracking-tight" style={{ color: s.c }}>{s.v}</p>
@@ -1671,7 +1671,7 @@ export function ProjectDashboardView({ tasks }: { tasks: Task[] }) {
         </div>
 
         {/* Row 1 */}
-        <div className="grid grid-cols-2 gap-5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <h3 className="text-[13px] text-gray-800 mb-4">Tiến độ tổng thể</h3>
             <div className="flex items-center gap-6">
@@ -1704,8 +1704,8 @@ export function ProjectDashboardView({ tasks }: { tasks: Task[] }) {
         </div>
 
         {/* Row 2 */}
-        <div className="grid grid-cols-3 gap-5 mb-5">
-          <div className="col-span-2 bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="md:col-span-2 bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <h3 className="text-[13px] text-gray-800 mb-4">Tiến độ theo tuần</h3>
             <div className="flex items-end gap-4 h-[140px]">
               {weeklyData.map((w, i) => {
@@ -1740,7 +1740,7 @@ export function ProjectDashboardView({ tasks }: { tasks: Task[] }) {
         </div>
 
         {/* Row 3 */}
-        <div className="grid grid-cols-3 gap-5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <h3 className="text-[13px] text-gray-800 mb-3">Hiệu suất thành viên</h3>
             <div className="space-y-2.5">
@@ -1788,7 +1788,7 @@ export function ProjectDashboardView({ tasks }: { tasks: Task[] }) {
         </div>
 
         {/* Row 4 */}
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <h3 className="text-[13px] text-gray-800 mb-3 flex items-center gap-2"><Clock className="w-3.5 h-3.5 text-cyan-500" /> Thời gian dự án</h3>
             <div className="flex items-center gap-5">

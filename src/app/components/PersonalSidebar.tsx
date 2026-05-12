@@ -4,7 +4,7 @@ import {
   StickyNote, Bookmark, BookOpen, User, Users,
   ChevronDown, ChevronRight, Archive, Bell, BellOff, Trash2, PenLine, Check, Settings2, UserPlus, UserMinus,
   Phone, QrCode, ScanLine, Share2, Copy, CheckCircle2,
-  Hash, FolderKanban, PenSquare
+  Hash, FolderKanban, PenSquare, CheckSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { personalChatItems, type PersonalChatItem } from "./data";
@@ -24,6 +24,7 @@ interface PersonalSidebarProps {
   onSectionChange?: (section: "personal" | "channel" | "project") => void;
   notifCount?: number;
   onToggleNotif?: () => void;
+  onViewChange?: (view: string) => void;
 }
 
 const groupColorOptions = [
@@ -31,7 +32,7 @@ const groupColorOptions = [
   "#4f46e5", "#0f766e", "#b45309", "#6366f1", "#e11d48",
 ];
 
-export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChats, onGroupChatsChange, extraDMs, onExtraDMsChange, expanded, activeSection = "personal", onSectionChange, notifCount = 0, onToggleNotif }: PersonalSidebarProps) {
+export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChats, onGroupChatsChange, extraDMs, onExtraDMsChange, expanded, activeSection = "personal", onSectionChange, notifCount = 0, onToggleNotif, onViewChange }: PersonalSidebarProps) {
   const [search, setSearch] = useState("");
   const [showTools, setShowTools] = useState(true);
   const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -167,34 +168,21 @@ export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChat
     setRenamingId(null);
   };
 
+  const activeContacts = [...dms, ...groupChats].slice(0, 12);
+
   return (
     <div className={`${expanded ? "flex-1" : "hidden md:flex md:w-[280px] md:shrink-0"} h-full bg-white flex flex-col border-r border-gray-300/60 overflow-hidden pb-16 md:pb-0`}>
-      {/* Header — App name (mobile) / Cá nhân label (desktop) */}
-      <div className="px-4 pt-3 pb-2 flex items-center gap-2">
-        {/* Mobile: app name */}
-        <p className="md:hidden flex-1 text-[20px] text-gray-900" style={{ fontWeight: 700 }}>VWork Chat</p>
-        {/* Desktop: original label */}
-        <div className="hidden md:flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shrink-0">
-            <User className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] text-gray-900 truncate" style={{ fontWeight: 600 }}>Cá nhân</p>
-            <p className="text-[10px] text-gray-500">
-              {totalUnread > 0 ? `${totalUnread} tin chưa đọc` : "Tin nhắn & ghi chú"}
-            </p>
-          </div>
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+        <div className="flex-1 min-w-0 md:hidden">
+          <p className="text-[22px] leading-tight truncate" style={{ fontWeight: 800 }}>
+            <span className="text-cyan-500">VWork</span>
+            <span className="text-gray-900"> Chat</span>
+          </p>
         </div>
-        {/* Compose button (mobile) */}
-        <button onClick={() => setShowNewMessage(true)} className="md:hidden w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-all">
-          <PenSquare className="w-5 h-5" />
-        </button>
-        {/* Notification bell (desktop) */}
-        <button onClick={onToggleNotif} className="hidden md:flex w-7 h-7 rounded-lg hover:bg-gray-100 items-center justify-center text-gray-400 hover:text-gray-600 transition-all relative shrink-0">
-          <Bell className="w-4 h-4" />
-          {notifCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-[8px] text-white flex items-center justify-center animate-pulse">{notifCount}</span>
-          )}
+        <button onClick={() => setShowNewMessage(true)}
+          className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-200 flex items-center justify-center text-gray-700 transition-all shrink-0">
+          <PenSquare className="w-[18px] h-[18px]" />
         </button>
       </div>
 
@@ -240,6 +228,57 @@ export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChat
         </div>
       )}
       </div>
+
+      {/* Active contacts row — mobile only */}
+      <div className="md:hidden px-3 py-2 border-b border-gray-100">
+        <div className="flex gap-4 overflow-x-auto no-scrollbar px-1 py-2">
+          {activeContacts.map(contact => {
+            const unreadCount = contact.unread || 0;
+            const label = contact.icon || contact.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+            return (
+              <button key={contact.id} onClick={() => onChatSelect(contact.id)}
+                className="flex flex-col items-center gap-1 shrink-0 active:opacity-70 transition-opacity">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center text-[16px] font-bold text-white shadow-sm"
+                    style={{ backgroundColor: contact.color || "#0891b2" }}>
+                    {label}
+                  </div>
+                  {contact.online && (
+                    <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-white" />
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-[10px] text-white font-bold flex items-center justify-center px-1 shadow-sm">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-gray-600 w-14 text-center truncate leading-tight">
+                  {contact.name.split(" ").slice(-1)[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* My Work shortcut */}
+      {onViewChange && (
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => onViewChange("mywork")}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 active:bg-cyan-200 border border-cyan-100 transition-all group"
+          >
+            <div className="w-7 h-7 rounded-lg bg-cyan-500 flex items-center justify-center shrink-0">
+              <CheckSquare className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[13px] font-medium text-cyan-700">Công việc của tôi</p>
+              <p className="text-[10px] text-cyan-500/70">Task được giao cho bạn</p>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-cyan-400 group-hover:text-cyan-600 shrink-0" />
+          </button>
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex gap-1 px-3 mt-1.5 mb-1 overflow-x-auto no-scrollbar">
@@ -378,32 +417,6 @@ export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChat
         )}
       </div>
 
-      {/* Bottom buttons */}
-      <div className="px-3 py-2 border-t border-gray-200 space-y-1.5">
-        <button
-          onClick={() => setShowCreateGroup(true)}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[12px] transition-all border border-emerald-200"
-        >
-          <Users className="w-3.5 h-3.5" />
-          Tạo nhóm chat
-        </button>
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setShowNewMessage(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-[12px] transition-all border border-cyan-200"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Tin nhắn mới
-          </button>
-          <button
-            onClick={() => setShowFindContact(true)}
-            className="w-9 h-[34px] flex items-center justify-center rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-600 transition-all border border-violet-200"
-            title="Tìm qua SĐT / QR"
-          >
-            <QrCode className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
 
       {/* Context Menu */}
       {contextMenu && (() => {
@@ -498,6 +511,8 @@ export function PersonalSidebar({ selectedChat, onChatSelect, onClose, groupChat
         <NewMessageModal
           existingDMs={dms}
           onClose={() => setShowNewMessage(false)}
+          onSelectNotes={() => { setShowNewMessage(false); onChatSelect("pc-notes"); }}
+          onCreateGroup={() => { setShowNewMessage(false); setShowCreateGroup(true); }}
           onStartChat={(contact) => {
             // Check if DM already exists for this contact
             const existing = dms.find(d => d.name === contact.name);
@@ -610,7 +625,7 @@ function GroupModal({ mode, dms, editGroup, onClose, onCreate, onEdit }: {
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 md:p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:w-[420px] max-h-[90vh] md:max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:w-[420px] max-h-[calc(90vh-64px)] md:max-h-[85vh] flex flex-col overflow-hidden mb-16 md:mb-0"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -854,133 +869,132 @@ function GroupModal({ mode, dms, editGroup, onClose, onCreate, onEdit }: {
 }
 
 // ── New Message Modal ──
-function NewMessageModal({ existingDMs, onClose, onStartChat }: {
+function NewMessageModal({ existingDMs, onClose, onSelectNotes, onCreateGroup, onStartChat }: {
   existingDMs: PersonalChatItem[];
   onClose: () => void;
+  onSelectNotes: () => void;
+  onCreateGroup: () => void;
   onStartChat: (contact: CompanyContact) => void;
 }) {
   const [search, setSearch] = useState("");
 
-  // Group contacts by department, sort online first
-  const existingNames = new Set(existingDMs.map(d => d.name));
-  const newContacts = companyDirectory.filter(c => !existingNames.has(c.name));
-
-  const filtered = newContacts.filter(c =>
+  const allContacts = companyDirectory;
+  const filtered = allContacts.filter(c =>
     !search ||
     c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.role.toLowerCase().includes(search.toLowerCase()) ||
-    c.department.toLowerCase().includes(search.toLowerCase())
+    c.role.toLowerCase().includes(search.toLowerCase())
   );
-
-  // Sort: online first
   const sorted = [...filtered].sort((a, b) => {
     if (a.online && !b.online) return -1;
     if (!a.online && b.online) return 1;
     return a.name.localeCompare(b.name);
   });
 
-  // Group by department
-  const departments = [...new Set(sorted.map(c => c.department))];
-
-  const onlineCount = newContacts.filter(c => c.online).length;
+  const quickOptions = [
+    {
+      icon: <StickyNote className="w-5 h-5 text-gray-600" />,
+      bg: "bg-gray-200",
+      label: "Ghi chú mới",
+      onClick: onSelectNotes,
+    },
+    {
+      icon: <Users className="w-5 h-5 text-gray-600" />,
+      bg: "bg-gray-200",
+      label: "Nhóm chat",
+      onClick: onCreateGroup,
+    },
+    {
+      icon: <MessageSquare className="w-5 h-5 text-gray-600" />,
+      bg: "bg-gray-200",
+      label: "Chat với AI",
+      onClick: () => { toast.success("Tính năng đang phát triển"); onClose(); },
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 md:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-white flex flex-col md:bg-black/30 md:items-center md:justify-center md:p-4">
       <div
-        className="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:w-[420px] max-h-[90vh] md:max-h-[85vh] flex flex-col overflow-hidden"
+        className="flex flex-col h-full md:h-auto md:max-h-[85vh] md:w-[420px] md:rounded-2xl md:shadow-2xl md:bg-white overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[14px] text-gray-900" style={{ fontWeight: 600 }}>
-              Tin nhắn mới
-            </p>
-            <p className="text-[11px] text-gray-500">
-              {newContacts.length} người trong danh bạ · {onlineCount} đang online
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600"
-          >
-            <X className="w-4 h-4" />
+        {/* Top bar — Messenger style */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+          <button onClick={onClose} className="text-[15px] text-cyan-500 font-medium active:opacity-60 transition-opacity w-12">
+            Hủy
           </button>
+          <p className="text-[16px] text-gray-900 font-bold">Tin nhắn mới</p>
+          <div className="w-12" />
         </div>
 
-        {/* Search */}
-        <div className="px-4 py-2.5">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus-within:border-cyan-300 transition-all">
-            <Search className="w-3.5 h-3.5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm theo tên, chức vụ, phòng ban..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="flex-1 text-[12px] bg-transparent outline-none text-gray-700 placeholder-gray-400"
-              autoFocus
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500">
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+        {/* Đến: row */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100">
+          <span className="text-[14px] text-gray-500 shrink-0">Đến:</span>
+          <input
+            type="text"
+            placeholder="Tìm kiếm..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="flex-1 text-[14px] outline-none text-gray-800 placeholder-gray-400 bg-transparent"
+            autoFocus
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="text-gray-300 hover:text-gray-500">
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Contact list */}
-        <div className="flex-1 overflow-y-auto px-3 pb-3">
-          {departments.map(dept => {
-            const deptContacts = sorted.filter(c => c.department === dept);
-            if (deptContacts.length === 0) return null;
-            return (
-              <div key={dept} className="mb-2">
-                <p className="px-2 py-1 text-[10px] text-gray-500 uppercase tracking-wider">{dept}</p>
-                {deptContacts.map(contact => (
-                  <button
-                    key={contact.id}
-                    onClick={() => onStartChat(contact)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-cyan-50 transition-all group"
-                  >
-                    <div className="relative shrink-0">
-                      <div
-                        className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[11px] text-white"
-                        style={{ backgroundColor: contact.color }}
-                      >
-                        {contact.initials}
-                      </div>
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
-                        contact.online ? "bg-emerald-500" : "bg-gray-300"
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] text-gray-800 truncate">{contact.name}</p>
-                      <p className="text-[10px] text-gray-500 truncate">{contact.role}</p>
-                    </div>
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[10px] text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full">
-                        Nhắn tin
-                      </span>
-                    </div>
-                  </button>
-                ))}
+        <div className="flex-1 overflow-y-auto">
+          {/* Quick options — only show when not searching */}
+          {!search && (
+            <>
+              {quickOptions.map(opt => (
+                <button
+                  key={opt.label}
+                  onClick={opt.onClick}
+                  className="w-full flex items-center gap-4 px-4 py-3.5 active:bg-gray-50 hover:bg-gray-50 transition-colors"
+                >
+                  <div className={`w-11 h-11 rounded-full ${opt.bg} flex items-center justify-center shrink-0`}>
+                    {opt.icon}
+                  </div>
+                  <span className="flex-1 text-left text-[15px] text-gray-900 font-medium">{opt.label}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </button>
+              ))}
+              <p className="px-4 pt-4 pb-2 text-[13px] text-gray-500 font-medium">Gợi ý</p>
+            </>
+          )}
+
+          {/* Contact list */}
+          {sorted.map(contact => (
+            <button
+              key={contact.id}
+              onClick={() => onStartChat(contact)}
+              className="w-full flex items-center gap-4 px-4 py-3 active:bg-gray-50 hover:bg-gray-50 transition-colors"
+            >
+              <div className="relative shrink-0">
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
+                  style={{ backgroundColor: contact.color }}
+                >
+                  {contact.initials}
+                </div>
+                {contact.online && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-400 border-2 border-white" />
+                )}
               </div>
-            );
-          })}
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-[15px] text-gray-900 truncate">{contact.name}</p>
+                {contact.online && (
+                  <p className="text-[12px] text-green-500 truncate">Đang hoạt động</p>
+                )}
+              </div>
+            </button>
+          ))}
 
-          {/* Empty */}
           {sorted.length === 0 && (
-            <div className="text-center py-8">
-              <Search className="w-6 h-6 text-gray-200 mx-auto mb-2" />
-              <p className="text-[11px] text-gray-500">
-                {search ? "Không tìm thấy kết quả" : "Đã nhắn tin với tất cả mọi người"}
-              </p>
-              <p className="text-[9px] text-gray-400 mt-0.5">
-                {search ? "Thử từ khoá khác" : "Bạn đã có cuộc trò chuyện với tất cả"}
-              </p>
+            <div className="text-center py-12">
+              <p className="text-[14px] text-gray-400">Không tìm thấy kết quả</p>
             </div>
           )}
         </div>

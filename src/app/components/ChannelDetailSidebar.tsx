@@ -447,8 +447,7 @@ export function ChannelDetailSidebar({ channelId, selectedItem, onItemSelect, on
   if (!config) return null;
 
   const [search, setSearch] = useState("");
-  const defaultFilter = config.quickFilters?.find(f => f.id !== "chat")?.id || "";
-  const [activeFilter, setActiveFilter] = useState(defaultFilter);
+  const [activeFilter, setActiveFilter] = useState("");
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; itemId: string } | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [addCatMode, setAddCatMode] = useState(false);
@@ -465,7 +464,7 @@ export function ChannelDetailSidebar({ channelId, selectedItem, onItemSelect, on
   // Reset state when channel changes
   useEffect(() => {
     setSearch("");
-    setActiveFilter(config.quickFilters?.find(f => f.id !== "chat")?.id || "");
+    setActiveFilter("");
     setCollapsedGroups(new Set());
   }, [channelId]);
 
