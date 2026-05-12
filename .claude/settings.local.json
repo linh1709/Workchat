@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(pnpm --version)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(echo $PATH)",
+      "Read(//e/Users/khanhdn/Downloads/Claudevhv/miniapp/Plaza Vea/.claude/**)"
+    ]
+  }
+}
